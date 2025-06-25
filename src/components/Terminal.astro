@@ -12,9 +12,9 @@ const formattedTime = now.toLocaleTimeString();
 </style>
 
 <div class="min-h-screen bg-gradient-to-br from-green-400 to-blue-500 p-4 font-mono">
-  <!-- Windows XP Terminal Window -->
+  <!-- WSL Terminal Window -->
   <div class="max-w-4xl mx-auto bg-black border-2 border-gray-300 rounded-lg shadow-2xl mt-8">
-    <!-- Window Title Bar -->
+    <!-- WSL Bar -->
     <div class="bg-gradient-to-r from-blue-600 to-blue-400 px-3 py-2 flex justify-between items-center rounded-t-lg">
       <span class="text-white text-sm font-bold">Wadood Subsystem for Linux - WSL</span>
       <div class="flex space-x-1">
@@ -33,14 +33,19 @@ const formattedTime = now.toLocaleTimeString();
 	  <div class="mb-3"> ######################### </div>
       <div class="mb-1">Type 'help' to get started</div>
       
-      <!-- Command Prompt -->
+      <!-- Command Content -->
       <div class="flex items-center mt-2">
         <span class="text-blue-400">whoami@WadoodSultan-WSL:/$ </span>
-        <input 
-			type="text"
-			class="bg-black border-none outline-none text-green-400 font-mono flex-1"
-    		autofocus
-  		/>
+        <div class="flex items-center flex-1 relative">
+    <input 
+      type="text" 
+      class="bg-black border-none outline-none text-green-400 font-mono flex-1"
+      style="caret-color: transparent;"
+      autofocus
+      id="terminal-input"
+    />
+    <span class="absolute left-0 top-0 w-2 h-5 bg-green-400 animate-pulse opacity-95 pointer-events-none"></span>
+  </div>
       </div>
     </div>
   </div>
