@@ -1,6 +1,7 @@
 # Wadood Subsystem for Linux
 
-## 🚀 Overhaul of Portfolio Website www.wadoodsultan.com
+## 🚀 Overhaul of Portfolio Website http://wadoodsultan.com
+
 - Change the entire layout
 - Make the UI more intuitive
 - Do not spend more time on JS
