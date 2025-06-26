@@ -13,7 +13,7 @@ const formattedTime = now.toLocaleTimeString();
 
 <div class="min-h-screen bg-gradient-to-br from-green-400 to-blue-500 p-4 font-mono">
   <!-- WSL Terminal Window -->
-  <div class="max-w-4xl mx-auto bg-black border-2 border-gray-300 rounded-lg shadow-2xl mt-8">
+  <div class="max-w-6xl mx-auto bg-black border-2 border-gray-300 rounded-lg shadow-2xl mt-50">
     <!-- WSL Bar -->
     <div class="bg-gradient-to-r from-blue-600 to-blue-400 px-3 py-2 flex justify-between items-center rounded-t-lg">
       <span class="text-white text-sm font-bold">Wadood Subsystem for Linux - WSL</span>
@@ -25,28 +25,122 @@ const formattedTime = now.toLocaleTimeString();
     </div>
     
     <!-- Terminal Content -->
-    <div class="p-4 text-green-400 bg-black h-96 overflow-y-auto font-mono text-sm">
+    <div class="p-4 text-green-400 bg-black h-147 overflow-y-auto font-mono text-sm" id="terminal-content"> 
 	  <div class="mb-1">First login time: {formattedTime}</div>
       <div class="mb-1">Copyright (C) 2025 Wadood Sultan. All rights reserved.</div>
 	  <div class="mb-3"> ######################### </div>
       <div class="mb-3">Welcome to WSL's Terminal </div>
 	  <div class="mb-3"> ######################### </div>
       <div class="mb-1">Type 'help' to get started</div>
+	  <!-- Command history -->
+      <div id="command-history"></div>
       
       <!-- Command Content -->
-      <div class="flex items-center mt-2">
-        <span class="text-blue-400">whoami@WadoodSultan-WSL$:/ </span>
-        <div class="flex items-center flex-1 relative">
-    <input 
-      type="text" 
-      class="bg-black border-none outline-none text-green-400 font-mono flex-1"
-      style="caret-color: transparent;"
-      autofocus
-      id="terminal-input"
-    />
-    <span class="absolute left-0 top-0 w-2 h-5 bg-green-400 animate-pulse opacity-95 pointer-events-none"></span>
-  </div>
+      <div class="flex items-center" id="current-prompt">
+        <span class="text-blue-400">wadood@wadoodSultan-WSL ~ % &nbsp;</span>
+        <input 
+          type="text" 
+          class="bg-black border-none outline-none text-green-400 font-mono flex-1"
+          id="command-input"
+          autofocus
+        />
       </div>
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const commandInput = document.getElementById('command-input') as HTMLInputElement;
+    const commandHistory = document.getElementById('command-history') as HTMLElement;
+    const terminalContent = document.getElementById('terminal-content') as HTMLElement;
+    
+    // Check here if  or command exist
+    if (!commandInput || !commandHistory || !terminalContent) {
+      console.error('Terminal elements not found. Try again!');
+      return;
+    }
+    
+    // Basic commands
+    const commands: Record<string, () => string> = {
+      help: () => `Available commands:
+  help     - Show this help message
+  about    - About Wadood Sultan
+  skills   - Technical skills
+  projects - Portfolio projects
+  contact  - Contact information
+  resume   - Download resume
+  clear    - Clear terminal
+  wadoodllm  - Chat with me, about me!!! (coming soon!)`,
+      
+      about: () => `About Wadood Sultan:(coming soon!)`,
+      
+      skills: () => `Technical Skills:(coming soon!)`,
+      
+      projects: () => `Portfolio Projects:(coming soon!)`,
+      
+      contact: () => `Contact Information:
+  GitHub: github.com/SMWundefined
+  LinkedIn: linkedin.com/in/smw147
+  Email: wadoodsultanm@gmail.com
+  Portfolio: wadoodsultan.com`,
+      
+      resume: () => `(coming soon!)`,
+      
+      clear: () => 'CLEAR',
+      
+      'ai-chat': () => `AI Assistant coming soon!
+  This will be powered by Claude API trained on my resume and experience.
+  Stay tuned for interactive AI conversations about my background!`
+    };
+    
+    function executeCommand(cmd: string): string {
+      const trimmedCmd = cmd.trim().toLowerCase();
+      
+	  // Handle special commands
+      if (commands[trimmedCmd]) {
+        return commands[trimmedCmd]();
+      } else if (trimmedCmd === '') {
+        return '';
+      } else {
+        return `Command not found: ${cmd}. Type 'help' for available commands.`;
+      }
+    }
+    
+	// Add command to scroll history
+    function addToHistory(command: string, output: string): void {
+      const historyEntry = document.createElement('div');
+      historyEntry.className = 'mb-2';
+      
+      if (output === 'CLEAR') {
+        commandHistory.innerHTML = '';
+        return;
+      }
+      
+      historyEntry.innerHTML = `
+        <div class="text-blue-400">wadood@wadoodSultan-WSL ~ % ${command}</div>
+        <div class="text-green-400 whitespace-pre-line ml-4">${output}</div>
+      `;
+      
+      commandHistory.appendChild(historyEntry);
+      
+      // Scroll to bottom
+      terminalContent.scrollTop = terminalContent.scrollHeight;
+    }
+    
+    commandInput.addEventListener('keydown', function(e: KeyboardEvent) {
+      if (e.key === 'Enter') {
+        const command = commandInput.value;
+        const output = executeCommand(command);
+        
+        addToHistory(command, output);
+        commandInput.value = '';
+      }
+    });
+    
+    // Keep input focused
+    document.addEventListener('click', function() {
+      commandInput.focus();
+    });
+  });
+</script>
