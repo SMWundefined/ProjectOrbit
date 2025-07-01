@@ -36,111 +36,22 @@ const formattedTime = now.toLocaleTimeString();
       <div id="command-history"></div>
       
       <!-- Command Content -->
-      <div class="flex items-center" id="current-prompt">
-        <span class="text-blue-400">wadood@wadoodSultan-WSL ~ % &nbsp;</span>
-        <input 
-          type="text" 
-          class="bg-black border-none outline-none text-green-400 font-mono flex-1"
-          id="command-input"
-          autofocus
-        />
-      </div>
+      <!-- Command Content -->
+		<div class="flex items-center" id="current-prompt">
+		<span class="text-blue-400">wadood@wadoodSultan-WSL ~ % &nbsp;</span>
+		<input 
+			type="text" 
+			class="bg-black border-none outline-none text-green-400 font-mono flex-1"
+			id="command-input"
+			autocomplete="off"
+			autocapitalize="off"
+			autocorrect="off"
+			spellcheck="false"
+			autofocus
+		/>
+		</div>
     </div>
   </div>
 </div>
 
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const commandInput = document.getElementById('command-input') as HTMLInputElement;
-    const commandHistory = document.getElementById('command-history') as HTMLElement;
-    const terminalContent = document.getElementById('terminal-content') as HTMLElement;
-    
-    // Check here if  or command exist
-    if (!commandInput || !commandHistory || !terminalContent) {
-      console.error('Terminal elements not found. Try again!');
-      return;
-    }
-    
-    // Basic commands
-    const commands: Record<string, () => string> = {
-      help: () => `Available commands:
-  help     - Show this help message
-  about    - About Wadood Sultan
-  skills   - Technical skills
-  projects - Portfolio projects
-  contact  - Contact information
-  resume   - Download resume
-  clear    - Clear terminal
-  wadoodllm  - Chat with me, about me!!! (coming soon!)`,
-      
-      about: () => `About Wadood Sultan:(coming soon!)`,
-      
-      skills: () => `Technical Skills:(coming soon!)`,
-      
-      projects: () => `Portfolio Projects:(coming soon!)`,
-      
-      contact: () => `Contact Information:
-  GitHub: github.com/SMWundefined
-  LinkedIn: linkedin.com/in/smw147
-  Email: wadoodsultanm@gmail.com
-  Portfolio: wadoodsultan.com`,
-      
-      resume: () => `(coming soon!)`,
-      
-      clear: () => 'CLEAR',
-      
-      'ai-chat': () => `AI Assistant coming soon!
-  This will be powered by Claude API trained on my resume and experience.
-  Stay tuned for interactive AI conversations about my background!`
-    };
-    
-    function executeCommand(cmd: string): string {
-      const trimmedCmd = cmd.trim().toLowerCase();
-      
-	  // Handle special commands
-      if (commands[trimmedCmd]) {
-        return commands[trimmedCmd]();
-      } else if (trimmedCmd === '') {
-        return '';
-      } else {
-        return `Command not found: ${cmd}. Type 'help' for available commands.`;
-      }
-    }
-    
-	// Add command to scroll history
-    function addToHistory(command: string, output: string): void {
-      const historyEntry = document.createElement('div');
-      historyEntry.className = 'mb-2';
-      
-      if (output === 'CLEAR') {
-        commandHistory.innerHTML = '';
-        return;
-      }
-      
-      historyEntry.innerHTML = `
-        <div class="text-blue-400">wadood@wadoodSultan-WSL ~ % ${command}</div>
-        <div class="text-green-400 whitespace-pre-line ml-4">${output}</div>
-      `;
-      
-      commandHistory.appendChild(historyEntry);
-      
-      // Scroll to bottom
-      terminalContent.scrollTop = terminalContent.scrollHeight;
-    }
-    
-    commandInput.addEventListener('keydown', function(e: KeyboardEvent) {
-      if (e.key === 'Enter') {
-        const command = commandInput.value;
-        const output = executeCommand(command);
-        
-        addToHistory(command, output);
-        commandInput.value = '';
-      }
-    });
-    
-    // Keep input focused
-    document.addEventListener('click', function() {
-      commandInput.focus();
-    });
-  });
-</script>
+<script type="module" src="/scripts/terminal.js"></script>
