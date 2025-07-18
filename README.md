@@ -21,4 +21,12 @@ All commands are run from the root of the project, from a terminal:
 | `npm run preview`         | Preview your build locally, before deploying     |
 | `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
 
-## Made possible by Astro Build! 
+## AI Architecture 
+
+```
+Your Resume/Data → Chunking → Embeddings → Vector DB
+                                            ↓
+User Question → Embed → Similarity Search → Context
+                                            ↓
+                        LLM + Context → Response
+```
