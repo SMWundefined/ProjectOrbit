@@ -24,7 +24,7 @@ All commands are run from the root of the project, from a terminal:
 ## AI Architecture 
 
 ```
-Your Resume/Data → Chunking → Embeddings → Vector DB
+Resume/Data → Chunking → Embeddings → Vector DB
                                             ↓
 User Question → Embed → Similarity Search → Context
                                             ↓
