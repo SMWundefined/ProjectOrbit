@@ -30,5 +30,3 @@ User Question → Embed → Similarity Search → Context
                                             ↓
                         LLM + Context → Response
 ```
-> A user types ‘What projects show my Kubernetes skills?’ → The system uses embeddings to find resume/portfolio chunks that mention Kubernetes work → LLM crafts a response using those.”
-
