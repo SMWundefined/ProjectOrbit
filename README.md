@@ -30,3 +30,24 @@ User Question → Embed → Similarity Search → Context
                                             ↓
                         LLM + Context → Response
 ```
+
+## Overview of Architecture 
+
+```
+GitHub Repo (Public):
+├── src/components/Terminal.astro
+├── src/lib/rag-system.js 
+├── src/data/
+│   ├── template-resume.md (example data)
+│   └── data-schema.md (format documentation)
+├── README.md (how others can use it)
+
+AWS S3 (Private):
+├── professional.md (your real data)
+├── conferences.md  
+└── personal.md
+
+Astro Build Process:
+- Fetches real data from S3
+- Template data or own S3
+```
