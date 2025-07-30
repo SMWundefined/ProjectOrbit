@@ -43,9 +43,10 @@ GitHub Repo (Public):
 ├── README.md (how others can use it)
 
 AWS S3 (Private):
-├── professional.md (your real data)
-├── conferences.md  
-└── personal.md
+|__ MD Files
+├   ── professional.md (your real data)
+├   ── conferences.md  
+└   ── personal.md
 
 Astro Build Process:
 - Fetches real data from S3
