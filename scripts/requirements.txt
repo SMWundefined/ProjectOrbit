@@ -1,0 +1,6 @@
+# RAG ingestion pipeline dependencies (install: pip install -r scripts/requirements.txt)
+
+chromadb>=0.5          # local vector store
+sentence-transformers>=3.0  # all-MiniLM-L6-v2 embeddings, runs locally
+python-dotenv>=1.0     # reads .env configuration
+boto3>=1.34            # S3 sync, used in a later phase
