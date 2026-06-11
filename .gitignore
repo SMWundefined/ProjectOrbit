@@ -13,9 +13,24 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# environment variables
+# environment variables — never commit real credentials
 .env
-.env.production
+.env.*
+!.env.example
+
+# personal data files — local only, never committed (any directory)
+**/professional.md
+**/community.md
+**/personal.md
+
+# vector database
+chroma_db/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
 
 # macOS-specific files
 .DS_Store
