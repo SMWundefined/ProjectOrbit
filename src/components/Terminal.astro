@@ -161,4 +161,8 @@ const lastLogin = new Date().toLocaleString('en-US', {
   }
 </script>
 
-<script type="module" src="/scripts/terminal.js"></script>
+<script>
+  import { initTerminal } from '../lib/terminal';
+
+  initTerminal();
+</script>
