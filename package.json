@@ -12,6 +12,7 @@
     "@astrojs/node": "^9.5.5",
     "@tailwindcss/vite": "^4.1.10",
     "astro": "^5.10.1",
+    "groq-sdk": "^1.2.1",
     "tailwindcss": "^4.1.10"
   }
 }

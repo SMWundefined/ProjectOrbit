@@ -1,17 +1,25 @@
-// AI chat endpoint: terminal -> RAG retrieval (Python sidecar) -> Ollama.
+// AI chat endpoint: terminal -> RAG retrieval (Python sidecar) -> LLM.
+// Generation uses Groq when GROQ_API_KEY is set, otherwise falls back to
+// local Ollama so dev works without a key.
 //
 // POST { query: string, sessionId: string }
 // Responds with a streamed text/plain body. The X-Orbit-Route header says
 // how the answer was produced: "rag" (LLM with context), "fallback"
 // (similarity below threshold), or "error" (friendly failure message).
+// X-Orbit-Provider names the LLM backend that answered: "groq" | "ollama".
 
 import type { APIRoute } from 'astro';
+import Groq from 'groq-sdk';
 
 export const prerender = false;
 
 const RAG_SERVER_URL = import.meta.env.RAG_SERVER_URL ?? 'http://127.0.0.1:8001';
+const GROQ_API_KEY = import.meta.env.GROQ_API_KEY ?? '';
+const GROQ_MODEL = import.meta.env.GROQ_MODEL || 'llama-3.1-8b-instant';
 const OLLAMA_HOST = import.meta.env.OLLAMA_HOST ?? 'http://localhost:11434';
 const OLLAMA_MODEL = import.meta.env.OLLAMA_MODEL || 'llama3.1:latest';
+
+const groq = GROQ_API_KEY ? new Groq({ apiKey: GROQ_API_KEY }) : null;
 const MIN_SIMILARITY = Number(import.meta.env.RAG_MIN_SIMILARITY ?? 0.32);
 const GITHUB_URL = import.meta.env.PUBLIC_GITHUB_URL ?? '';
 const LINKEDIN_URL = import.meta.env.PUBLIC_LINKEDIN_URL ?? '';
@@ -115,6 +123,61 @@ function buildSystemPrompt(chunks: RetrievedChunk[]): string {
   ].join('\n');
 }
 
+const STREAM_HEADERS = {
+  'Content-Type': 'text/plain; charset=utf-8',
+  'X-Orbit-Route': 'rag',
+  'Cache-Control': 'no-store',
+} as const;
+
+// Groq SDK yields chunk objects; re-emit just the token text.
+function groqTextStream(
+  stream: AsyncIterable<{ choices: Array<{ delta?: { content?: string | null } }> }>
+): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder();
+  return new ReadableStream({
+    async start(controller) {
+      try {
+        for await (const chunk of stream) {
+          const token = chunk.choices[0]?.delta?.content;
+          if (token) controller.enqueue(encoder.encode(token));
+        }
+      } catch {
+        controller.enqueue(encoder.encode('\n[stream interrupted]'));
+      } finally {
+        controller.close();
+      }
+    },
+  });
+}
+
+async function generateWithGroq(systemPrompt: string, query: string): Promise<Response> {
+  try {
+    const stream = await groq!.chat.completions.create({
+      model: GROQ_MODEL,
+      stream: true,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: query },
+      ],
+    });
+    return new Response(groqTextStream(stream), {
+      status: 200,
+      headers: { ...STREAM_HEADERS, 'X-Orbit-Provider': 'groq' },
+    });
+  } catch (error) {
+    const status = (error as { status?: number }).status;
+    const hint =
+      status === 401
+        ? 'The Groq API key was rejected. Check GROQ_API_KEY in .env.'
+        : status === 403
+          ? 'Groq denied access from this network (VPN or region block). Check your connection.'
+          : status === 429
+            ? 'The AI is rate limited right now. Try again in a moment.'
+            : 'The AI service returned an error. Try again in a moment.';
+    return textResponse(hint, 503, 'error');
+  }
+}
+
 // Ollama streams NDJSON; re-emit just the token text as a plain stream.
 function ollamaTextStream(upstream: ReadableStream<Uint8Array>): ReadableStream<Uint8Array> {
   const decoder = new TextDecoder();
@@ -194,7 +257,13 @@ export const POST: APIRoute = async ({ request }) => {
     return textResponse(fallbackMessage(query), 200, 'fallback');
   }
 
-  // Generation via Ollama, streamed straight through.
+  // Generation: Groq when a key is configured, local Ollama otherwise.
+  const systemPrompt = buildSystemPrompt(chunks);
+  if (groq) return generateWithGroq(systemPrompt, query);
+  return generateWithOllama(systemPrompt, query);
+};
+
+async function generateWithOllama(systemPrompt: string, query: string): Promise<Response> {
   let upstream: Response;
   try {
     upstream = await fetch(`${OLLAMA_HOST}/api/chat`, {
@@ -204,7 +273,7 @@ export const POST: APIRoute = async ({ request }) => {
         model: OLLAMA_MODEL,
         stream: true,
         messages: [
-          { role: 'system', content: buildSystemPrompt(chunks) },
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: query },
         ],
       }),
@@ -227,10 +296,6 @@ export const POST: APIRoute = async ({ request }) => {
 
   return new Response(ollamaTextStream(upstream.body), {
     status: 200,
-    headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'X-Orbit-Route': 'rag',
-      'Cache-Control': 'no-store',
-    },
+    headers: { ...STREAM_HEADERS, 'X-Orbit-Provider': 'ollama' },
   });
-};
+}
