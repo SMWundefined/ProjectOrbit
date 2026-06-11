@@ -26,6 +26,9 @@ pnpm-debug.log*
 # vector database
 chroma_db/
 
+# local scratch (screenshots, review artifacts)
+output/
+
 # python
 __pycache__/
 *.pyc

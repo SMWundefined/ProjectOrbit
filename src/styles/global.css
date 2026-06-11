@@ -1,1 +1,129 @@
 @import "tailwindcss";
+
+/*
+  ProjectOrbit design tokens
+  --------------------------
+  Spacing and type sizes use Tailwind's default scales (4px spacing grid,
+  text-xs → text-base for terminal copy). Everything semantic lives here
+  so components never hardcode raw hex values.
+*/
+@theme {
+  /* typography — Cascadia is the Windows Terminal face, keeping WSL authentic */
+  --font-mono: "Cascadia Code", "Cascadia Mono", ui-monospace, "SF Mono",
+    Menlo, Consolas, monospace;
+
+  /* palette — green on black, one blue accent, muted chrome */
+  --color-page: #0d1117;        /* page behind the terminal window */
+  --color-term-bg: #000000;     /* terminal canvas */
+  --color-term-chrome: #16191d; /* title bar */
+  --color-term-border: #2a2e34; /* window + title bar borders */
+  --color-term-green: #3ddc84;  /* primary output text */
+  --color-term-blue: #61aff0;   /* prompt */
+  --color-term-muted: #7d8590;  /* secondary text, window controls */
+
+  /* ambient accents — Aston Martin racing green + gold, used sparingly */
+  --color-accent-green: #00422e;
+  --color-accent-gold: #c9a227;
+}
+
+/* gold appears only on interaction — link hovers inside the terminal */
+#terminal-content a:hover {
+  color: var(--color-accent-gold);
+}
+
+/* scrollbar matches the terminal — near-invisible until needed */
+#terminal-content {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-term-border) transparent;
+}
+
+#terminal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+#terminal-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#terminal-content::-webkit-scrollbar-thumb {
+  background: var(--color-term-border);
+  border-radius: 9999px;
+}
+
+#terminal-content::-webkit-scrollbar-thumb:hover {
+  background: var(--color-term-muted);
+}
+
+/* light streak — a shooting-star pass across the backdrop, fired by JS */
+#streak {
+  position: absolute;
+  width: 240px;
+  height: 2px;
+  border-radius: 9999px;
+  opacity: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--streak-color, var(--color-accent-gold)),
+    transparent
+  );
+}
+
+/* subtle entrance — under 300ms, no movement that draws attention to itself */
+@keyframes term-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* smooth cursor blink — eased, not a hard step */
+@keyframes term-blink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  55%,
+  95% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@utility animate-fade-in {
+  animation: term-fade-in 250ms ease-out both;
+}
+
+@utility animate-blink {
+  animation: term-blink 1.1s ease-in-out infinite;
+}
+
+/* ambient glow drift — slow enough to feel still, alive on a second look */
+@keyframes glow-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(4vw, 2vh, 0) scale(1.08);
+  }
+}
+
+@utility animate-glow-drift {
+  animation: glow-drift 30s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
