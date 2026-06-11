@@ -11,7 +11,10 @@ export interface CommandContext {
   };
 }
 
-export type CommandResult = { type: 'output'; html: string } | { type: 'clear' };
+export type CommandResult =
+  | { type: 'output'; html: string }
+  | { type: 'clear' }
+  | { type: 'enter-chat'; html: string };
 
 interface Command {
   description: string;
@@ -97,10 +100,10 @@ const commands: Record<string, Command> = {
   },
   'ai-chat': {
     description: 'Chat with an AI that knows my background',
-    run: () =>
-      output(
-        `AI chat coming soon!\n  A local LLM with retrieval over my background will answer\n  questions about my experience, projects, and interests.`
-      ),
+    run: () => ({
+      type: 'enter-chat',
+      html: `Entering AI chat. Ask about my experience, projects, or interests.\nType 'exit' to return to the terminal.`,
+    }),
   },
 };
 
