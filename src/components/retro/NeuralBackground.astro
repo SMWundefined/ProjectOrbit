@@ -1,0 +1,625 @@
+---
+// Neural/cosmic background.
+//
+// Topology: 1-2 large neuron-shaped clusters (dense soma + radiating
+// dendrite arms, slowly rotating) and a few small satellite knots, all
+// finely meshed with translucent curved synapses. Faint tracts join
+// neighboring clusters; comet pulses travel them and light up the
+// receiving cluster — the network powers itself.
+//
+// Interaction: the cursor agitates particles (electric jolt). Hold the
+// cursor inside a cluster and it CHARGES — agitation and gold rise over
+// ~5s until the cluster detonates: it ceases to exist and its particles
+// streak to the surviving clusters as golden comets. Exploded clusters
+// recondense elsewhere later by pulling members from the largest one.
+//
+// Performance: pauses when hidden; static frame under
+// prefers-reduced-motion or on < 4 core devices.
+---
+
+<canvas id="neural-bg" aria-hidden="true"></canvas>
+
+<style>
+  #neural-bg {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 55% 45% at 85% 92%, rgba(201, 162, 39, 0.045) 0%, transparent 60%),
+      radial-gradient(ellipse 90% 70% at 50% 10%, var(--retro-deep) 0%, transparent 65%),
+      var(--retro-bg);
+  }
+</style>
+
+<script>
+  const ACCENT = { r: 3, g: 122, b: 104 }; // tiffany green
+  const GOLD = { r: 201, g: 162, b: 39 }; // WSL streak gold
+  const LINK_DIST = 140;
+  const BRIDGE_DIST = 240;
+  const REPEL_DIST = 110;
+  const ENERGIZE_DIST = 150;
+  const PULSE_TRAVEL_MS = 1700;
+  const CLUSTER_FLASH_MS = 750;
+  const CHARGE_MS = 5000; // hover this long to detonate a cluster
+  const RESPAWN_MS = 18000;
+
+  interface Cluster {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    r: number;
+    rot: number;
+    rotSpeed: number;
+    litUntil: number;
+    nearest: number;
+    alive: boolean;
+    chargeMs: number;
+    respawnAt: number;
+  }
+
+  interface Particle {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    r: number;
+    phase: number;
+    cluster: number; // home cluster, -1 = free dust
+    ox: number; // home offset from the cluster heart (unrotated)
+    oy: number;
+    migrating: boolean;
+    settleAt: number; // failsafe: settle into the new home by this time
+  }
+
+  interface Pulse {
+    from: number;
+    to: number;
+    born: number;
+    gold: boolean;
+  }
+
+  function mix(t: number) {
+    return {
+      r: Math.round(ACCENT.r + (GOLD.r - ACCENT.r) * t),
+      g: Math.round(ACCENT.g + (GOLD.g - ACCENT.g) * t),
+      b: Math.round(ACCENT.b + (GOLD.b - ACCENT.b) * t),
+    };
+  }
+
+  function gauss(): number {
+    return (Math.random() + Math.random() + Math.random()) / 3 - 0.5;
+  }
+
+  const canvas = document.getElementById('neural-bg') as HTMLCanvasElement | null;
+  const ctx = canvas?.getContext('2d') ?? null;
+
+  if (canvas && ctx) {
+    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const lowPower = (navigator.hardwareConcurrency ?? 8) < 4;
+    const animate = !reducedMotion && !lowPower;
+
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+    let clusters: Cluster[] = [];
+    let particles: Particle[] = [];
+    const pulses: Pulse[] = [];
+    const mouse = { x: -9999, y: -9999 };
+    // the nav black hole broadcasts its gravity while hovered
+    const gravity = { on: false, x: 0, y: 0 };
+    let raf = 0;
+    let nextPulseAt = 0;
+    let lastNow = 0;
+
+    window.addEventListener('orbit:gravity-on', ((e: CustomEvent) => {
+      gravity.on = true;
+      gravity.x = e.detail.x;
+      gravity.y = e.detail.y;
+    }) as EventListener);
+    window.addEventListener('orbit:gravity-off', () => {
+      gravity.on = false;
+    });
+
+    function aliveClusters(): number[] {
+      return clusters.map((c, i) => (c.alive ? i : -1)).filter((i) => i >= 0);
+    }
+
+    function computeNearest(): void {
+      const alive = aliveClusters();
+      for (const c of alive) {
+        let best = c;
+        let bestD = Infinity;
+        for (const k of alive) {
+          if (k === c) continue;
+          const d = Math.hypot(clusters[k].x - clusters[c].x, clusters[k].y - clusters[c].y);
+          if (d < bestD) {
+            bestD = d;
+            best = k;
+          }
+        }
+        clusters[c].nearest = best;
+      }
+    }
+
+    // weighted random among living clusters, optionally excluding one
+    function pickCluster(exclude = -1): number {
+      const alive = aliveClusters().filter((i) => i !== exclude);
+      if (alive.length === 0) return -1;
+      const sum = alive.reduce((s, i) => s + clusters[i].r, 0);
+      let roll = Math.random() * sum;
+      for (const i of alive) {
+        roll -= clusters[i].r;
+        if (roll <= 0) return i;
+      }
+      return alive[alive.length - 1];
+    }
+
+    function resize(): void {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas!.width = Math.floor(width * dpr);
+      canvas!.height = Math.floor(height * dpr);
+      ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
+      seed();
+    }
+
+    function placeHeart(minSep: number): [number, number] {
+      const margin = 100;
+      let x = 0;
+      let y = 0;
+      for (let tries = 0; tries < 40; tries++) {
+        x = margin + Math.random() * (width - margin * 2);
+        y = margin + Math.random() * (height - margin * 2);
+        if (clusters.every((k) => Math.hypot(k.x - x, k.y - y) > minSep)) break;
+      }
+      return [x, y];
+    }
+
+    function makeCluster(r: number): Cluster {
+      const [x, y] = placeHeart(r * 1.6 + 160);
+      return {
+        x,
+        y,
+        vx: (Math.random() - 0.5) * 0.05,
+        vy: (Math.random() - 0.5) * 0.05,
+        r,
+        rot: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() * 0.0014 + 0.0006) * (Math.random() < 0.5 ? -1 : 1),
+        litUntil: 0,
+        nearest: 0,
+        alive: true,
+        chargeMs: 0,
+        respawnAt: 0,
+      };
+    }
+
+    function seed(): void {
+      clusters = [];
+      // 1-2 big neurons own the screen, plus 2-3 small satellite knots
+      const majors = width < 640 ? 1 : width > 1200 ? 2 : 1 + Math.round(Math.random());
+      const minors = width < 640 ? 2 : 3;
+      for (let i = 0; i < majors; i++) clusters.push(makeCluster(140 + Math.random() * 70));
+      for (let i = 0; i < minors; i++) clusters.push(makeCluster(40 + Math.random() * 35));
+      computeNearest();
+
+      const total = width < 640 ? 46 : Math.round(Math.min(84, Math.max(64, (width * height) / 15000)));
+      const weightSum = clusters.reduce((s, c) => s + c.r, 0);
+
+      particles = Array.from({ length: total }, (_, i) => {
+        const inCluster = i < total * 0.9;
+        let c = -1;
+        if (inCluster) {
+          let roll = Math.random() * weightSum;
+          for (let k = 0; k < clusters.length; k++) {
+            roll -= clusters[k].r;
+            if (roll <= 0) {
+              c = k;
+              break;
+            }
+          }
+          if (c < 0) c = clusters.length - 1;
+        }
+
+        let ox = 0;
+        let oy = 0;
+        if (c >= 0) {
+          const home = clusters[c];
+          const big = home.r >= 120;
+          if (big && Math.random() < 0.6) {
+            // dendrite arm: along one of 5 fixed directions, with a dense
+            // soma falloff and slight lateral scatter
+            const arm = ((Math.PI * 2) / 5) * Math.floor(Math.random() * 5);
+            const along = Math.abs(gauss()) * home.r * 2.4;
+            const lateral = gauss() * home.r * 0.35;
+            ox = Math.cos(arm) * along - Math.sin(arm) * lateral;
+            oy = Math.sin(arm) * along + Math.cos(arm) * lateral;
+          } else {
+            // soma / small knot: tight gaussian blob
+            ox = gauss() * home.r * (big ? 0.9 : 1.8);
+            oy = gauss() * home.r * (big ? 0.9 : 1.8);
+          }
+        }
+
+        return {
+          x: c >= 0 ? clusters[c].x + ox : Math.random() * width,
+          y: c >= 0 ? clusters[c].y + oy : Math.random() * height,
+          vx: (Math.random() - 0.5) * 0.2,
+          vy: (Math.random() - 0.5) * 0.2,
+          r: 0.8 + Math.random(),
+          phase: Math.random() * Math.PI * 2,
+          cluster: c,
+          ox,
+          oy,
+          migrating: false,
+          settleAt: 0,
+        };
+      });
+      pulses.length = 0;
+    }
+
+    function explode(ci: number, now: number): void {
+      const c = clusters[ci];
+      c.alive = false;
+      c.chargeMs = 0;
+      c.respawnAt = now + RESPAWN_MS + Math.random() * 8000;
+      for (const p of particles) {
+        if (p.cluster !== ci) continue;
+        const target = pickCluster(ci);
+        // blast outward from the dying heart, then streak to a new home
+        const dx = p.x - c.x;
+        const dy = p.y - c.y;
+        const d = Math.hypot(dx, dy) || 1;
+        const kick = 1.4 + Math.random() * 1.4;
+        p.vx = (dx / d) * kick;
+        p.vy = (dy / d) * kick;
+        p.cluster = target;
+        p.migrating = true;
+        p.settleAt = now + 5200;
+      }
+      computeNearest();
+    }
+
+    function respawn(ci: number, now: number): void {
+      const c = clusters[ci];
+      const [x, y] = placeHeart(260);
+      c.x = x;
+      c.y = y;
+      c.r = 50 + Math.random() * 50;
+      c.alive = true;
+      c.litUntil = now + CLUSTER_FLASH_MS;
+      computeNearest();
+      // the largest cluster donates some members, streaking over as comets
+      const donorIdx = aliveClusters()
+        .filter((i) => i !== ci)
+        .sort((a, b) => clusters[b].r - clusters[a].r)[0];
+      if (donorIdx === undefined) return;
+      const donors = particles.filter((p) => p.cluster === donorIdx && !p.migrating);
+      for (const p of donors.slice(0, Math.ceil(donors.length * 0.3))) {
+        p.cluster = ci;
+        p.migrating = true;
+        p.settleAt = now + 5200;
+      }
+    }
+
+    function step(p: Particle, now: number, chargingIdx: number, chargeRatio: number): void {
+      // cursor jolt: lean away + random agitation; agitation ramps hard
+      // while the cluster is charging toward detonation
+      const dx = p.x - mouse.x;
+      const dy = p.y - mouse.y;
+      const d = Math.hypot(dx, dy);
+      if (d < REPEL_DIST && d > 0.001) {
+        const near = (REPEL_DIST - d) / REPEL_DIST;
+        const surge = p.cluster === chargingIdx ? 1 + chargeRatio * 4 : 1;
+        p.vx += ((dx / d) * 0.02 + (Math.random() - 0.5) * 0.24 * surge) * near;
+        p.vy += ((dy / d) * 0.02 + (Math.random() - 0.5) * 0.24 * surge) * near;
+      }
+
+      if (p.migrating && p.cluster >= 0) {
+        // strong pull toward the new home heart
+        const home = clusters[p.cluster];
+        const hx = home.x - p.x;
+        const hy = home.y - p.y;
+        const hd = Math.hypot(hx, hy) || 1;
+        p.vx += (hx / hd) * 0.06;
+        p.vy += (hy / hd) * 0.06;
+        p.vx *= 0.985;
+        p.vy *= 0.985;
+        if (hd < home.r * 0.7 || now > p.settleAt) {
+          p.migrating = false;
+          p.ox = gauss() * home.r * 1.4;
+          p.oy = gauss() * home.r * 1.4;
+          p.vx *= 0.3;
+          p.vy *= 0.3;
+        }
+      } else if (p.cluster >= 0) {
+        // hold the neuron shape: spring to the slowly rotating home offset
+        const home = clusters[p.cluster];
+        const cos = Math.cos(home.rot);
+        const sin = Math.sin(home.rot);
+        const tx = home.x + p.ox * cos - p.oy * sin;
+        const ty = home.y + p.ox * sin + p.oy * cos;
+        p.vx += (tx - p.x) * 0.0009;
+        p.vy += (ty - p.y) * 0.0009;
+        p.vx *= 0.985;
+        p.vy *= 0.985;
+      }
+
+      // the black hole: particles within reach spiral in and fall.
+      // swallowed ones are re-emitted at a random edge — Hawking radiation.
+      if (gravity.on && !p.migrating) {
+        const gx = gravity.x - p.x;
+        const gy = gravity.y - p.y;
+        const gd = Math.hypot(gx, gy);
+        if (gd < 620 && gd > 1) {
+          const pull = Math.pow(1 - gd / 620, 1.6) * 0.7;
+          p.vx += (gx / gd) * pull + (-gy / gd) * pull * 0.45;
+          p.vy += (gy / gd) * pull + (gx / gd) * pull * 0.45;
+          if (gd < 26) {
+            const side = Math.floor(Math.random() * 4);
+            p.x = side === 0 ? -10 : side === 1 ? width + 10 : Math.random() * width;
+            p.y = side === 2 ? -10 : side === 3 ? height + 10 : Math.random() * height;
+            p.vx = (Math.random() - 0.5) * 0.2;
+            p.vy = (Math.random() - 0.5) * 0.2;
+          }
+        }
+      }
+
+      const speed = Math.hypot(p.vx, p.vy);
+      const cap = p.migrating ? 3.2 : gravity.on ? 3.0 : 0.5;
+      if (speed > cap) {
+        p.vx *= 0.94;
+        p.vy *= 0.94;
+      }
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.cluster < 0) {
+        if (p.x < -20) p.x = width + 20;
+        if (p.x > width + 20) p.x = -20;
+        if (p.y < -20) p.y = height + 20;
+        if (p.y > height + 20) p.y = -20;
+      }
+    }
+
+    function curve(ax: number, ay: number, bx: number, by: number, now: number, sway: number): [number, number] {
+      const mx = (ax + bx) / 2;
+      const my = (ay + by) / 2;
+      const dx = bx - ax;
+      const dy = by - ay;
+      const d = Math.hypot(dx, dy) || 1;
+      const bend = Math.sin(now / 2600 + sway) * d * 0.24;
+      return [mx + (-dy / d) * bend, my + (dx / d) * bend];
+    }
+
+    function quadPoint(u: number, ax: number, ay: number, cx: number, cy: number, bx: number, by: number): [number, number] {
+      const v = 1 - u;
+      return [v * v * ax + 2 * u * v * cx + u * u * bx, v * v * ay + 2 * u * v * cy + u * u * by];
+    }
+
+    function draw(now: number, chargingIdx: number, chargeRatio: number): void {
+      ctx!.clearRect(0, 0, width, height);
+      const alive = aliveClusters();
+
+      // faint tracts between living neighbor clusters
+      for (const ci of alive) {
+        const a = clusters[ci];
+        const b = clusters[a.nearest];
+        if (!b || !b.alive || a.nearest === ci) continue;
+        const [cx, cy] = curve(a.x, a.y, b.x, b.y, now, ci * 1.3);
+        ctx!.strokeStyle = `rgba(${ACCENT.r},${ACCENT.g},${ACCENT.b},0.05)`;
+        ctx!.lineWidth = 0.8;
+        ctx!.beginPath();
+        ctx!.moveTo(a.x, a.y);
+        ctx!.quadraticCurveTo(cx, cy, b.x, b.y);
+        ctx!.stroke();
+      }
+
+      // synapse mesh among settled particles
+      for (let i = 0; i < particles.length; i++) {
+        const a = particles[i];
+        if (a.migrating) continue;
+        for (let j = i + 1; j < particles.length; j++) {
+          const b = particles[j];
+          if (b.migrating) continue;
+          const sameCluster = a.cluster === b.cluster && a.cluster >= 0;
+          const maxDist = sameCluster ? LINK_DIST : BRIDGE_DIST;
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          if (Math.abs(dx) > maxDist || Math.abs(dy) > maxDist) continue;
+          const d = Math.hypot(dx, dy);
+          if (d > maxDist) continue;
+
+          const pulse = 0.7 + 0.3 * Math.sin(now / 1100 + a.phase + b.phase);
+          let alpha = (1 - d / maxDist) * (sameCluster ? 0.16 : 0.05) * pulse;
+          let color = ACCENT;
+
+          if (sameCluster && clusters[a.cluster].litUntil > now) {
+            alpha += ((clusters[a.cluster].litUntil - now) / CLUSTER_FLASH_MS) * 0.2;
+          }
+
+          // a charging cluster heats up: alpha and gold rise with charge
+          if (sameCluster && a.cluster === chargingIdx) {
+            alpha += chargeRatio * 0.3;
+            color = mix(chargeRatio * 0.8);
+          } else {
+            const md = Math.hypot((a.x + b.x) / 2 - mouse.x, (a.y + b.y) / 2 - mouse.y);
+            if (md < ENERGIZE_DIST) {
+              const near = 1 - md / ENERGIZE_DIST;
+              const shimmer = 0.5 + 0.5 * Math.sin(now / 800 + a.phase * 2 + b.phase);
+              const crackle = 0.55 + Math.random() * 0.45;
+              alpha += near * 0.32 * shimmer * crackle;
+              color = mix(near * 0.55 * shimmer);
+            }
+          }
+
+          ctx!.strokeStyle = `rgba(${color.r},${color.g},${color.b},${alpha.toFixed(3)})`;
+          ctx!.lineWidth = sameCluster ? 0.7 : 0.6;
+          const [cx, cy] = curve(a.x, a.y, b.x, b.y, now, a.phase * 1.7 + b.phase);
+          ctx!.beginPath();
+          ctx!.moveTo(a.x, a.y);
+          ctx!.quadraticCurveTo(cx, cy, b.x, b.y);
+          ctx!.stroke();
+        }
+      }
+
+      // comet pulses between clusters
+      if (animate && now > nextPulseAt && alive.length > 1) {
+        const from = alive[Math.floor(Math.random() * alive.length)];
+        if (clusters[from].nearest !== from && clusters[clusters[from].nearest].alive) {
+          pulses.push({ from, to: clusters[from].nearest, born: now, gold: Math.random() < 0.35 });
+        }
+        nextPulseAt = now + 2400 + Math.random() * 2600;
+      }
+      for (let s = pulses.length - 1; s >= 0; s--) {
+        const p = pulses[s];
+        if (!clusters[p.to].alive || !clusters[p.from].alive) {
+          pulses.splice(s, 1);
+          continue;
+        }
+        const u = (now - p.born) / PULSE_TRAVEL_MS;
+        if (u >= 1) {
+          clusters[p.to].litUntil = now + CLUSTER_FLASH_MS;
+          pulses.splice(s, 1);
+          continue;
+        }
+        const a = clusters[p.from];
+        const b = clusters[p.to];
+        const [cx, cy] = curve(a.x, a.y, b.x, b.y, now, p.from * 1.3);
+        const c = p.gold ? GOLD : ACCENT;
+        const fade = Math.sin(u * Math.PI);
+        const TAIL_SEGMENTS = 7;
+        for (let k = TAIL_SEGMENTS; k >= 0; k--) {
+          const ut = u - (k / TAIL_SEGMENTS) * 0.16;
+          if (ut < 0) continue;
+          const [px, py] = quadPoint(ut, a.x, a.y, cx, cy, b.x, b.y);
+          const taper = 1 - k / (TAIL_SEGMENTS + 1);
+          const isHead = k === 0;
+          ctx!.fillStyle = `rgba(${c.r},${c.g},${c.b},${(fade * (isHead ? 1 : 0.5 * taper)).toFixed(3)})`;
+          ctx!.shadowColor = `rgba(${c.r},${c.g},${c.b},0.9)`;
+          ctx!.shadowBlur = isHead ? 16 : 6 * taper;
+          ctx!.beginPath();
+          ctx!.arc(px, py, isHead ? 2.3 : 1.7 * taper, 0, Math.PI * 2);
+          ctx!.fill();
+        }
+        ctx!.shadowBlur = 0;
+      }
+
+      // particles: settled neurons glow softly; migrating ones streak gold
+      for (const p of particles) {
+        if (p.migrating) {
+          ctx!.strokeStyle = `rgba(${GOLD.r},${GOLD.g},${GOLD.b},0.75)`;
+          ctx!.lineWidth = 1.2;
+          ctx!.shadowColor = `rgba(${GOLD.r},${GOLD.g},${GOLD.b},0.9)`;
+          ctx!.shadowBlur = 8;
+          ctx!.beginPath();
+          ctx!.moveTo(p.x, p.y);
+          ctx!.lineTo(p.x - p.vx * 7, p.y - p.vy * 7);
+          ctx!.stroke();
+          ctx!.shadowBlur = 0;
+          continue;
+        }
+        const glow = 0.5 + 0.5 * Math.sin(now / 1600 + p.phase);
+        let alpha = 0.35 + 0.3 * glow;
+        let color = ACCENT;
+        if (p.cluster >= 0 && clusters[p.cluster].litUntil > now) {
+          alpha += ((clusters[p.cluster].litUntil - now) / CLUSTER_FLASH_MS) * 0.3;
+        }
+        if (p.cluster === chargingIdx) {
+          alpha += chargeRatio * 0.35;
+          color = mix(chargeRatio * 0.7);
+        }
+        // accretion heat: infalling matter glows gold near the black hole
+        if (gravity.on) {
+          const gd = Math.hypot(gravity.x - p.x, gravity.y - p.y);
+          if (gd < 200) {
+            const heat = 1 - gd / 200;
+            color = mix(0.75 * heat);
+            alpha += heat * 0.35;
+          }
+        }
+        ctx!.fillStyle = `rgba(${color.r},${color.g},${color.b},${alpha.toFixed(3)})`;
+        ctx!.beginPath();
+        ctx!.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx!.fill();
+      }
+    }
+
+    function loop(now: number): void {
+      const dt = lastNow ? Math.min(now - lastNow, 100) : 16;
+      lastNow = now;
+
+      // cluster drift, rotation, respawn
+      for (let i = 0; i < clusters.length; i++) {
+        const c = clusters[i];
+        if (!c.alive) {
+          if (c.respawnAt && now > c.respawnAt) respawn(i, now);
+          continue;
+        }
+        c.x += c.vx;
+        c.y += c.vy;
+        c.rot += c.rotSpeed;
+        if (c.x < c.r || c.x > width - c.r) c.vx *= -1;
+        if (c.y < c.r || c.y > height - c.r) c.vy *= -1;
+      }
+
+      // charging: hold the cursor inside a cluster to detonate it
+      let chargingIdx = -1;
+      for (let i = 0; i < clusters.length; i++) {
+        const c = clusters[i];
+        if (!c.alive) continue;
+        const within = Math.hypot(mouse.x - c.x, mouse.y - c.y) < Math.max(c.r, 130);
+        if (within && chargingIdx === -1 && aliveClusters().length > 1) {
+          chargingIdx = i;
+          c.chargeMs += dt;
+          if (c.chargeMs >= CHARGE_MS) {
+            explode(i, now);
+            chargingIdx = -1;
+          }
+        } else {
+          c.chargeMs = Math.max(0, c.chargeMs - dt * 2);
+        }
+      }
+      const chargeRatio = chargingIdx >= 0 ? clusters[chargingIdx].chargeMs / CHARGE_MS : 0;
+
+      for (const p of particles) step(p, now, chargingIdx, chargeRatio);
+      draw(now, chargingIdx, chargeRatio);
+      raf = requestAnimationFrame(loop);
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+
+    if (animate) {
+      window.addEventListener(
+        'pointermove',
+        (e) => {
+          mouse.x = e.clientX;
+          mouse.y = e.clientY;
+        },
+        { passive: true }
+      );
+      window.addEventListener('pointerleave', () => {
+        mouse.x = -9999;
+        mouse.y = -9999;
+      });
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          cancelAnimationFrame(raf);
+          raf = 0;
+          lastNow = 0;
+        } else if (!raf) {
+          raf = requestAnimationFrame(loop);
+        }
+      });
+
+      raf = requestAnimationFrame(loop);
+    } else {
+      draw(0, -1, 0);
+    }
+  }
+</script>

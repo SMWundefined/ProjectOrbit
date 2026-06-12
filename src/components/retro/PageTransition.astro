@@ -1,0 +1,58 @@
+---
+// Shared shell for every /retro page: document head, neural field,
+// black-hole nav, and the arrival transition — pages materialize from
+// the warp (blur + slight scale settling into focus).
+import NeuralBackground from './NeuralBackground.astro';
+import BurgerMenu from './BurgerMenu.astro';
+import '../../styles/retro.css';
+
+interface Props {
+  title: string;
+  active: 'about' | 'education' | 'experience' | 'projects' | 'contact';
+  description?: string;
+}
+const { title, active, description = 'Portfolio' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+  </head>
+  <body class="retro-page">
+    <NeuralBackground />
+    <BurgerMenu active={active} />
+    <main class="retro-arrive relative z-10">
+      <slot />
+    </main>
+  </body>
+</html>
+
+<style is:global>
+  /* arrival from the warp: settle out of blur into focus */
+  @keyframes retro-arrive {
+    from {
+      opacity: 0;
+      transform: scale(1.03);
+      filter: blur(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+      filter: none;
+    }
+  }
+
+  .retro-arrive {
+    animation: retro-arrive 650ms var(--retro-ease) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .retro-arrive {
+      animation-duration: 0.01ms;
+    }
+  }
+</style>

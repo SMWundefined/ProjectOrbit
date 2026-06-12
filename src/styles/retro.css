@@ -1,0 +1,118 @@
+/*
+  /retro design system — neural night-space.
+  Tailwind handles layout; everything visual lives in these tokens and
+  keyframes. Colors are the Aston Martin palette from the design spec.
+*/
+
+:root {
+  /* palette */
+  --retro-bg: #000000;             /* pure black, space-like */
+  --retro-deep: #002420;           /* dark green depth layer */
+  --retro-accent: #037a68;         /* tiffany green — neurons, sparks, accents */
+  --retro-gray: #666769;           /* muted structural gray */
+  --retro-text: #ffffff;
+  --retro-text-muted: rgba(255, 255, 255, 0.6);
+
+  /* typography */
+  --retro-font-display: Optima, 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --retro-font-body: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --retro-tracking-wide: 0.12em;   /* headings breathe */
+  --retro-tracking: 0.04em;
+
+  /* motion */
+  --retro-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --retro-dur-fast: 200ms;
+  --retro-dur: 450ms;
+  --retro-dur-slow: 900ms;
+
+  /* depth */
+  --retro-glow: 0 0 24px rgba(3, 122, 104, 0.35);
+  --retro-glow-soft: 0 0 12px rgba(3, 122, 104, 0.2);
+}
+
+/* ---- base ---------------------------------------------------------- */
+
+.retro-page {
+  background: var(--retro-bg);
+  color: var(--retro-text);
+  font-family: var(--retro-font-body);
+  letter-spacing: var(--retro-tracking);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.retro-page h1,
+.retro-page h2,
+.retro-page h3 {
+  font-family: var(--retro-font-display);
+  letter-spacing: var(--retro-tracking-wide);
+  font-weight: 500;
+}
+
+.retro-page ::selection {
+  background: var(--retro-accent);
+  color: var(--retro-bg);
+}
+
+/* ---- shared animations ---------------------------------------------- */
+
+/* content entering — used by hero text and scroll-triggered cards */
+@keyframes retro-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* a neuron firing — timeline nodes when they enter the viewport */
+@keyframes retro-node-fire {
+  0% {
+    box-shadow: 0 0 0 0 rgba(3, 122, 104, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(3, 122, 104, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(3, 122, 104, 0);
+  }
+}
+
+/* scroll indicator drift */
+@keyframes retro-drift-down {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(8px);
+    opacity: 1;
+  }
+}
+
+/* gentle pulse for accent elements */
+@keyframes retro-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ---- motion safety ---------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .retro-page *,
+  .retro-page *::before,
+  .retro-page *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

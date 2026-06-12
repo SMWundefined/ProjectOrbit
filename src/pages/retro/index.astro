@@ -1,0 +1,126 @@
+---
+// About — the landing page of the neural portfolio.
+import PageTransition from '../../components/retro/PageTransition.astro';
+import { content } from '../../data/retro-content';
+
+const { identity } = content;
+---
+
+<PageTransition title={identity.name} active="about" description={`${identity.name} — ${identity.title}`}>
+  <!-- Hero: one full viewport, type leads -->
+  <section class="relative flex min-h-screen flex-col justify-center px-6 sm:px-12 lg:px-24">
+    <div class="max-w-3xl">
+      {
+        identity.photo && (
+          <img
+            src={identity.photo}
+            alt={identity.name}
+            class="photo-ring mb-10 h-28 w-28 rounded-full object-cover"
+            loading="eager"
+          />
+        )
+      }
+
+      <p class="hero-kicker mb-5 text-xs uppercase" style="color: var(--retro-accent); letter-spacing: 0.35em;">
+        {identity.title}
+      </p>
+
+      <h1 class="hero-name mb-8 leading-[1.05]">
+        {identity.name}
+      </h1>
+
+      <div class="max-w-xl space-y-4">
+        {
+          identity.bio.map((paragraph) => (
+            <p class="text-base leading-relaxed sm:text-lg" style="color: var(--retro-text-muted);">
+              {paragraph}
+            </p>
+          ))
+        }
+      </div>
+    </div>
+
+    <!-- scroll indicator -->
+    <a
+      href="#continue"
+      class="scroll-hint absolute bottom-8 left-1/2 -translate-x-1/2"
+      aria-label="Scroll to continue"
+    >
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M4 7l6 6 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+      </svg>
+    </a>
+  </section>
+
+  <!-- the thread: a quiet hand-off to the next page -->
+  <section id="continue" class="flex min-h-[40vh] items-center justify-center px-6">
+    <a href="/retro/education" class="next-link group flex items-baseline gap-4">
+      <span class="text-xs uppercase" style="color: var(--retro-gray); letter-spacing: 0.3em;">next</span>
+      <span class="next-label text-2xl sm:text-3xl" style="font-family: var(--retro-font-display);">
+        Education
+      </span>
+      <span class="next-arrow text-2xl" style="color: var(--retro-accent);">→</span>
+    </a>
+  </section>
+</PageTransition>
+
+<style>
+  .hero-name {
+    font-size: clamp(2.6rem, 8vw, 5.2rem);
+  }
+
+  .photo-ring {
+    border: 1.5px solid var(--retro-accent);
+    box-shadow: var(--retro-glow-soft);
+  }
+
+  .scroll-hint {
+    color: var(--retro-gray);
+    animation: retro-drift-down 2.4s var(--retro-ease) infinite;
+    transition: color var(--retro-dur-fast) ease;
+  }
+
+  .scroll-hint:hover {
+    color: var(--retro-accent);
+  }
+
+  .next-link {
+    text-decoration: none;
+    color: var(--retro-text);
+  }
+
+  .next-label {
+    position: relative;
+    letter-spacing: var(--retro-tracking-wide);
+    transition: letter-spacing 450ms var(--retro-ease);
+  }
+
+  .next-label::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -6px;
+    height: 1px;
+    width: 100%;
+    background: linear-gradient(90deg, var(--retro-accent), transparent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 450ms var(--retro-ease);
+  }
+
+  .group:hover .next-label {
+    letter-spacing: 0.18em;
+  }
+
+  .group:hover .next-label::after {
+    transform: scaleX(1);
+  }
+
+  .next-arrow {
+    transition: transform 450ms var(--retro-ease);
+  }
+
+  .group:hover .next-arrow {
+    transform: translateX(8px);
+  }
+</style>
