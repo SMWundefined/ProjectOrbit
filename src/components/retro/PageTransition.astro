@@ -1,17 +1,39 @@
 ---
 // Shared shell for every /retro page: document head, neural field,
-// black-hole nav, and the arrival transition — pages materialize from
-// the warp (blur + slight scale settling into focus).
+// black-hole nav, section rail, arrival/departure transitions, the
+// fullpage scroll engine, and the LIFE STAR — a star riding a faint
+// world line down the left margin of every page. Its stellar lifecycle
+// spans the whole site: it parks as a young star on About and goes
+// supernova as Contact bottoms out, scrubbing smoothly (and reversibly)
+// with scroll in between.
 import NeuralBackground from './NeuralBackground.astro';
 import BurgerMenu from './BurgerMenu.astro';
 import '../../styles/retro.css';
 
+type PageKey = 'about' | 'education' | 'experience' | 'projects' | 'skills' | 'contact';
+
 interface Props {
   title: string;
-  active: 'about' | 'education' | 'experience' | 'projects' | 'contact';
+  active: PageKey;
   description?: string;
 }
 const { title, active, description = 'Portfolio' } = Astro.props;
+
+// new -> old: the work before the foundations
+const sequence: { key: PageKey; href: string; label: string }[] = [
+  { key: 'about', href: '/retro', label: 'About' },
+  { key: 'experience', href: '/retro/experience', label: 'Experience' },
+  { key: 'education', href: '/retro/education', label: 'Education' },
+  { key: 'projects', href: '/retro/projects', label: 'Projects' },
+  { key: 'skills', href: '/retro/skills', label: 'Skills & Certifications' },
+  { key: 'contact', href: '/retro/contact', label: 'Contact' },
+];
+const currentIndex = sequence.findIndex((p) => p.key === active);
+const prev = currentIndex > 0 ? sequence[currentIndex - 1] : null;
+const next = currentIndex < sequence.length - 1 ? sequence[currentIndex + 1] : null;
+// this page's slice of the stellar lifecycle
+const sliceStart = currentIndex / sequence.length;
+const sliceEnd = (currentIndex + 1) / sequence.length;
 ---
 
 <!doctype html>
@@ -20,23 +42,97 @@ const { title, active, description = 'Portfolio' } = Astro.props;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
+    <meta name="color-scheme" content="dark" />
     <title>{title}</title>
+    <!-- before any stylesheet: the browser must never paint white -->
+    <style>
+      html {
+        background: #000;
+      }
+    </style>
+    <script is:inline>
+      // SYNCHRONOUS, before first paint: when arriving from in-site
+      // navigation, keep the content hidden so it never flashes visible
+      // before the arrive animation takes over. This is the difference
+      // between a smooth vanish and a refresh-flicker.
+      if (sessionStorage.getItem('orbit-nav') === '1') {
+        document.documentElement.classList.add('orbit-incoming');
+      }
+    </script>
+    <style is:global>
+      html.orbit-incoming #retro-main {
+        opacity: 0;
+      }
+    </style>
   </head>
-  <body class="retro-page">
+  <body
+    class="retro-page"
+    data-active={active}
+    data-prev={prev?.href ?? ''}
+    data-next={next?.href ?? ''}
+    data-prev-key={prev?.key ?? ''}
+    data-next-key={next?.key ?? ''}
+    data-slice-start={sliceStart}
+    data-slice-end={sliceEnd}
+  >
     <NeuralBackground />
     <BurgerMenu active={active} />
-    <main class="retro-arrive relative z-10">
+
+    <!-- section rail: where you are in the sequence, and a click-nav -->
+    <nav class="section-rail" aria-label="Sections">
+      {
+        sequence.map((page) => (
+          <a
+            href={page.href}
+            class="rail-tick"
+            aria-label={page.label}
+            aria-current={page.key === active ? 'page' : undefined}
+            title={page.label}
+          />
+        ))
+      }
+    </nav>
+
+    <!-- the world line + life star -->
+    <div class="life-track" aria-hidden="true">
+      <div class="life-flash"></div>
+      <svg class="life-line" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="life-fade" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="rgba(3,122,104,0)"></stop>
+            <stop offset="0.05" stop-color="rgba(3,122,104,0.16)"></stop>
+            <stop offset="0.95" stop-color="rgba(3,122,104,0.16)"></stop>
+            <stop offset="1" stop-color="rgba(3,122,104,0)"></stop>
+          </linearGradient>
+        </defs>
+        <path fill="none" stroke="url(#life-fade)" stroke-width="1"></path>
+      </svg>
+      <div class="life-star"></div>
+      <p class="life-label"></p>
+    </div>
+
+    <main id="retro-main" class="relative z-10">
       <slot />
     </main>
+
+    <!-- the way back: appears after a few seconds, never demands attention -->
+    <a href="/" class="enter-terminal" aria-label="Enter the terminal version of this site">
+      <span class="et-glyph" aria-hidden="true">&gt;_</span>
+      <span>Enter Terminal</span>
+    </a>
   </body>
 </html>
 
 <style is:global>
-  /* arrival from the warp: settle out of blur into focus */
+  /* the vanish: depart into soft focus-loss, arrive settling out of it.
+     Transforms stay tiny so no scrollbar is ever spawned mid-animation. */
+  /* transitions never scale above 1 — visual overflow past the viewport
+     spawns a transient scrollbar thumb, the frame-flicker that kills the
+     seamless feel. Arrivals grow up into place from beneath. */
   @keyframes retro-arrive {
     from {
       opacity: 0;
-      transform: scale(1.03);
+      transform: scale(0.985);
       filter: blur(8px);
     }
     to {
@@ -47,12 +143,547 @@ const { title, active, description = 'Portfolio' } = Astro.props;
   }
 
   .retro-arrive {
-    animation: retro-arrive 650ms var(--retro-ease) both;
+    animation: retro-arrive 600ms var(--retro-ease) both;
+  }
+
+  @keyframes retro-depart {
+    to {
+      opacity: 0;
+      transform: scale(0.99);
+      filter: blur(10px);
+    }
+  }
+
+  .retro-depart {
+    animation: retro-depart 420ms var(--retro-ease) forwards;
+  }
+
+  /* arrival from the terminal's wormhole: expand out of the singularity */
+  @keyframes retro-arrive-warp {
+    from {
+      opacity: 0;
+      transform: scale(0.82);
+      filter: blur(16px) brightness(1.7);
+    }
+    45% {
+      opacity: 1;
+    }
+    to {
+      opacity: 1;
+      transform: none;
+      filter: none;
+    }
+  }
+
+  .retro-arrive-warp {
+    animation: retro-arrive-warp 780ms var(--retro-ease) both;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .retro-arrive {
+    .retro-arrive,
+    .retro-depart {
       animation-duration: 0.01ms;
     }
   }
 </style>
+
+<style>
+  .section-rail {
+    position: fixed;
+    left: 1.4rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .rail-tick {
+    display: block;
+    width: 18px;
+    height: 1px;
+    background: var(--retro-gray);
+    opacity: 0.55;
+    transition:
+      width var(--retro-dur) var(--retro-ease),
+      background var(--retro-dur-fast) ease,
+      opacity var(--retro-dur-fast) ease,
+      box-shadow var(--retro-dur-fast) ease;
+  }
+
+  .rail-tick:hover {
+    background: var(--retro-accent);
+    opacity: 1;
+    width: 26px;
+  }
+
+  .rail-tick[aria-current='page'] {
+    width: 30px;
+    background: #c9a227;
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(201, 162, 39, 0.45);
+  }
+
+  /* ---- the world line --------------------------------------------------- */
+
+  /* fixed to the viewport: the same line on every page, never vanishing —
+     the one element that persists across the whole journey */
+  .life-track {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 4rem;
+    width: 44px;
+    z-index: 20;
+    pointer-events: none;
+  }
+
+  /* the supernova's viewport flash */
+  .life-flash {
+    position: fixed;
+    inset: 0;
+    z-index: 19;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(
+      circle at var(--fx, 4rem) var(--fy, 80%),
+      rgba(255, 248, 228, 0.42) 0%,
+      rgba(201, 162, 39, 0.18) 28%,
+      rgba(3, 122, 104, 0.06) 50%,
+      transparent 78%
+    );
+  }
+
+  .life-flash.boom {
+    animation: life-flash-fade 1500ms ease-out forwards;
+  }
+
+  @keyframes life-flash-fade {
+    0% {
+      opacity: 0;
+    }
+    12% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .life-line {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .life-star {
+    position: absolute;
+    border-radius: 9999px;
+    transform: translate(-50%, -50%);
+    /* hidden until the first frame positions it — no corner flash */
+    opacity: 0;
+  }
+
+  .life-label {
+    position: absolute;
+    transform: translate(16px, -50%);
+    opacity: 0;
+    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.22em;
+    color: rgba(255, 255, 255, 0.78);
+    white-space: nowrap;
+    background: rgba(0, 0, 0, 0.72);
+    border: 1px solid rgba(3, 122, 104, 0.25);
+    border-radius: 9999px;
+    padding: 0.22rem 0.6rem;
+    backdrop-filter: blur(3px);
+    transition: color 400ms ease;
+  }
+
+  /* supernova: two shock rings, the outer one enormous */
+  .life-star.nova::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 9999px;
+    border: 1.5px solid rgba(201, 162, 39, 0.95);
+    animation: life-shockwave 1300ms var(--retro-ease) forwards;
+  }
+
+  .life-star.nova::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 246, 222, 0.85);
+    animation: life-shockwave 900ms 80ms var(--retro-ease) forwards;
+  }
+
+  @keyframes life-shockwave {
+    from {
+      transform: scale(1);
+      opacity: 1;
+    }
+    to {
+      transform: scale(110);
+      opacity: 0;
+    }
+  }
+
+  /* neutron star remnant: pulsar blink */
+  .life-star.pulsar {
+    animation: life-pulsar 720ms ease-in-out infinite;
+  }
+
+  @keyframes life-pulsar {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.45;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .section-rail,
+    .life-track {
+      display: none;
+    }
+  }
+
+  /* ---- enter terminal ---------------------------------------------------- */
+
+  .enter-terminal {
+    position: fixed;
+    bottom: 1.4rem;
+    right: 1.4rem;
+    z-index: 35;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.5rem 0.95rem;
+    border: 1px solid rgba(3, 122, 104, 0.4);
+    border-radius: 9999px;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    text-decoration: none;
+    color: var(--retro-accent);
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    opacity: 0;
+    transform: translateY(8px);
+    animation: et-appear 600ms var(--retro-ease) 3s forwards;
+    transition:
+      border-color var(--retro-dur-fast) ease,
+      color var(--retro-dur-fast) ease,
+      box-shadow var(--retro-dur-fast) ease;
+  }
+
+  .et-glyph {
+    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+    font-size: 0.7rem;
+  }
+
+  .enter-terminal:hover {
+    border-color: rgba(201, 162, 39, 0.6);
+    color: #c9a227;
+    box-shadow: 0 0 16px rgba(201, 162, 39, 0.18);
+  }
+
+  @keyframes et-appear {
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .enter-terminal {
+      animation-delay: 0s;
+      animation-duration: 0.01ms;
+    }
+  }
+</style>
+
+<script>
+  // ================= fullpage scroll engine =================
+  const main = document.getElementById('retro-main');
+  const active = document.body.dataset.active || '';
+  const prevHref = document.body.dataset.prev || '';
+  const nextHref = document.body.dataset.next || '';
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // arrival: settle out of the vanish, but only for in-site navigation.
+  // The inline head script already has the content hidden — swap that
+  // hold for the animation in the same frame, so there is never a flash.
+  const navigated = sessionStorage.getItem('orbit-nav') === '1';
+  const warpedIn = sessionStorage.getItem('orbit-warp-in') === '1';
+  sessionStorage.removeItem('orbit-nav');
+  sessionStorage.removeItem('orbit-warp-in');
+  if (main && navigated && !reducedMotion) {
+    main.classList.add(warpedIn ? 'retro-arrive-warp' : 'retro-arrive');
+  }
+  document.documentElement.classList.remove('orbit-incoming');
+
+  let lockUntil = 0;
+  let departing = false;
+
+  function menuOpen(): boolean {
+    return document.getElementById('nav-overlay')?.classList.contains('open') ?? false;
+  }
+
+  function atTop(): boolean {
+    return window.scrollY <= 4;
+  }
+
+  function atBottom(): boolean {
+    return window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+  }
+
+  function depart(href: string, _dir: 'fwd' | 'back'): void {
+    if (departing || !href) return;
+    departing = true;
+    sessionStorage.setItem('orbit-nav', '1');
+    if (!reducedMotion && main) {
+      main.classList.add('retro-depart');
+      // navigate while the fade is still finishing: the blur covers the
+      // document swap instead of leaving a dead beat after it
+      window.setTimeout(() => location.assign(href), 260);
+    } else {
+      location.assign(href);
+    }
+  }
+
+  window.addEventListener(
+    'wheel',
+    (e: WheelEvent) => {
+      if (menuOpen() || departing) return;
+      const now = Date.now();
+      if (now < lockUntil) return;
+      if (e.deltaY > 40 && atBottom() && nextHref) {
+        lockUntil = now + 1500;
+        depart(nextHref, 'fwd');
+      } else if (e.deltaY < -40 && atTop() && prevHref) {
+        lockUntil = now + 1500;
+        depart(prevHref, 'back');
+      }
+    },
+    { passive: true }
+  );
+
+  let touchStartY = 0;
+  window.addEventListener(
+    'touchstart',
+    (e) => {
+      touchStartY = e.touches[0]?.clientY ?? 0;
+    },
+    { passive: true }
+  );
+  window.addEventListener(
+    'touchend',
+    (e) => {
+      if (menuOpen() || departing) return;
+      const endY = e.changedTouches[0]?.clientY ?? touchStartY;
+      const delta = touchStartY - endY;
+      if (delta > 70 && atBottom() && nextHref) depart(nextHref, 'fwd');
+      else if (delta < -70 && atTop() && prevHref) depart(prevHref, 'back');
+    },
+    { passive: true }
+  );
+
+  window.addEventListener('keydown', (e) => {
+    if (menuOpen() || departing) return;
+    if ((e.key === 'PageDown' || e.key === 'ArrowDown') && atBottom() && nextHref) depart(nextHref, 'fwd');
+    else if ((e.key === 'PageUp' || e.key === 'ArrowUp') && atTop() && prevHref) depart(prevHref, 'back');
+  });
+
+  // ================= the life star =================
+  // Lifecycle progress is global: this page owns [sliceStart, sliceEnd] of
+  // the star's life. Scroll scrubs through the slice; pages that don't
+  // scroll park at their slice end. Motion is eased so nothing snaps.
+  const track = document.querySelector<HTMLElement>('.life-track');
+  const linePath = document.querySelector<SVGPathElement>('.life-line path');
+  const star = document.querySelector<HTMLElement>('.life-star');
+  const label = document.querySelector<HTMLElement>('.life-label');
+  const sliceStart = parseFloat(document.body.dataset.sliceStart ?? '0');
+  const sliceEnd = parseFloat(document.body.dataset.sliceEnd ?? '1');
+
+  const lowPower = (navigator.hardwareConcurrency ?? 8) < 4;
+
+  if (track && linePath && star && label && !reducedMotion && !lowPower && window.innerWidth > 768) {
+    let H = 0;
+    const AXIS = 22; // x center within the track
+    const AMP = 9;
+
+    const curveX = (y: number): number => AXIS + AMP * Math.sin(y * 0.004 + 0.8);
+
+    function layout(): void {
+      H = track!.clientHeight;
+      const svg = linePath!.ownerSVGElement!;
+      svg.setAttribute('viewBox', `0 0 44 ${H}`);
+      let d = `M ${curveX(0).toFixed(1)} 0`;
+      for (let y = 28; y <= H; y += 28) {
+        d += ` L ${curveX(y).toFixed(1)} ${y.toFixed(1)}`;
+      }
+      linePath!.setAttribute('d', d);
+    }
+
+    // accurate massive-star lifecycle, p in [0,1] across the whole site
+    interface Phase {
+      p: number;
+      size: number;
+      blur: number;
+      color: [number, number, number, number];
+      glow: number;
+      label: string;
+    }
+
+    // phase keypoints aligned to page slices: each page ends on a distinct
+    // stage of the (accurate) massive-star lifecycle, with its own color
+    //   About      0.0-0.2  nebula -> a star is born (white-teal)
+    //   Experience 0.2-0.4  main sequence -> subgiant (warming white)
+    //   Education  0.4-0.6  red giant (gold)
+    //   Projects   0.6-0.8  red supergiant (deep amber)
+    //   Contact    0.8-1.0  core collapse -> SUPERNOVA -> neutron star
+    // six pages, six stages (still astrophysically ordered — the
+    // Wolf-Rayet is the stripped, furious blue star before the collapse)
+    //   About      -> main sequence   Experience -> subgiant
+    //   Education  -> red giant       Projects   -> red supergiant
+    //   Skills     -> wolf-rayet      Contact    -> collapse, BOOM, pulsar
+    const PHASES: Phase[] = [
+      { p: 0.0, size: 24, blur: 7, color: [3, 122, 104, 0.3], glow: 6, label: 'NEBULA' },
+      { p: 0.09, size: 13, blur: 3, color: [120, 200, 180, 0.6], glow: 10, label: 'PROTOSTAR' },
+      { p: 0.167, size: 7, blur: 0, color: [234, 255, 247, 0.95], glow: 14, label: 'MAIN SEQUENCE' },
+      { p: 0.333, size: 9.5, blur: 0, color: [245, 235, 200, 0.95], glow: 17, label: 'SUBGIANT' },
+      { p: 0.5, size: 15, blur: 0.5, color: [201, 162, 39, 0.92], glow: 22, label: 'RED GIANT' },
+      { p: 0.667, size: 27, blur: 1.5, color: [214, 92, 40, 0.95], glow: 32, label: 'RED SUPERGIANT' },
+      { p: 0.833, size: 9, blur: 0, color: [185, 225, 255, 1], glow: 30, label: 'WOLF-RAYET' },
+      { p: 0.93, size: 7, blur: 0, color: [255, 235, 190, 1], glow: 32, label: 'CORE COLLAPSE' },
+      { p: 0.968, size: 5, blur: 0, color: [255, 250, 235, 1], glow: 36, label: 'CORE COLLAPSE' },
+      { p: 1.0, size: 3.5, blur: 0, color: [223, 241, 255, 1], glow: 18, label: 'NEUTRON STAR' },
+    ];
+
+    const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
+
+    function styleStar(p: number, now: number): void {
+      let lo = PHASES[0];
+      let hi = PHASES[PHASES.length - 1];
+      for (let i = 0; i < PHASES.length - 1; i++) {
+        if (p >= PHASES[i].p && p <= PHASES[i + 1].p) {
+          lo = PHASES[i];
+          hi = PHASES[i + 1];
+          break;
+        }
+      }
+      const t = hi.p === lo.p ? 0 : (p - lo.p) / (hi.p - lo.p);
+      const size = lerp(lo.size, hi.size, t);
+      const blur = lerp(lo.blur, hi.blur, t);
+      const glow = lerp(lo.glow, hi.glow, t);
+      const r = Math.round(lerp(lo.color[0], hi.color[0], t));
+      const g = Math.round(lerp(lo.color[1], hi.color[1], t));
+      const b = Math.round(lerp(lo.color[2], hi.color[2], t));
+      const a = lerp(lo.color[3], hi.color[3], t);
+
+      // shimmer: two incommensurate sines make an organic twinkle —
+      // the halo breathes and the disc trembles, never mechanically
+      const shimmer = 1 + 0.22 * Math.sin(now / 260) * (0.55 + 0.45 * Math.sin(now / 1130));
+      const tremble = 1 + 0.045 * Math.sin(now / 215 + Math.sin(now / 87));
+
+      star!.style.width = `${size.toFixed(1)}px`;
+      star!.style.height = `${size.toFixed(1)}px`;
+      star!.style.transform = `translate(-50%, -50%) scale(${tremble.toFixed(3)})`;
+      star!.style.background = `rgba(${r},${g},${b},${a.toFixed(2)})`;
+      star!.style.filter = blur > 0.3 ? `blur(${blur.toFixed(1)}px)` : '';
+      star!.style.boxShadow = `0 0 ${(glow * shimmer).toFixed(1)}px rgba(${r},${g},${b},${(a * 0.8).toFixed(2)})`;
+      label!.textContent = t > 0.5 ? hi.label : lo.label;
+      label!.style.color = p >= 0.96 ? '#c9a227' : '';
+    }
+
+    const NOVA_AT = 0.97;
+    const STORE_KEY = 'orbit-life-p';
+    const flash = document.querySelector<HTMLElement>('.life-flash');
+
+    // continuity across navigations: resume exactly where the star was
+    const saved = parseFloat(sessionStorage.getItem(STORE_KEY) ?? '');
+    let current = Number.isFinite(saved) ? saved : sliceStart;
+    let exploded = current >= NOVA_AT; // don't replay the boom on reload
+    if (exploded) star.classList.add('pulsar');
+    let raf = 0;
+
+    function targetP(): number {
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      const local = scrollable > 20 ? Math.min(1, Math.max(0, window.scrollY / scrollable)) : 1;
+      return sliceStart + local * (sliceEnd - sliceStart);
+    }
+
+    function frame(now: number): void {
+      const target = targetP();
+      current += (target - current) * 0.09; // glide, never snap
+      if (Math.abs(target - current) < 0.0004) current = target;
+
+      // altitude = global lifecycle progress: the star descends the fixed
+      // viewport line over the course of the whole site, never teleporting
+      const y = current * (H * 0.92) + H * 0.04;
+      const x = curveX(y);
+      star!.style.top = `${y.toFixed(1)}px`;
+      star!.style.left = `${x.toFixed(1)}px`;
+      star!.style.opacity = '1';
+      label!.style.top = `${y.toFixed(1)}px`;
+      label!.style.left = `${x.toFixed(1)}px`;
+      label!.style.opacity = '1';
+
+      styleStar(current, now);
+
+      if (current >= NOVA_AT && !exploded) {
+        exploded = true;
+        star!.classList.add('nova', 'pulsar');
+        window.setTimeout(() => star!.classList.remove('nova'), 1400);
+        if (flash) {
+          flash.style.setProperty('--fx', `${x + 64}px`);
+          flash.style.setProperty('--fy', `${y.toFixed(0)}px`);
+          flash.classList.remove('boom');
+          void flash.offsetWidth; // restart the animation
+          flash.classList.add('boom');
+        }
+        // the blast has weight: a radial impulse through the neural field
+        window.dispatchEvent(
+          new CustomEvent('orbit:supernova', { detail: { x: x + 64, y } })
+        );
+        label!.textContent = 'SUPERNOVA';
+        window.setTimeout(() => {
+          if (exploded) label!.textContent = 'NEUTRON STAR';
+        }, 1200);
+      } else if (current < NOVA_AT && exploded) {
+        exploded = false;
+        star!.classList.remove('nova', 'pulsar');
+      }
+
+      raf = requestAnimationFrame(frame);
+    }
+
+    // persist position once, on the way out — not sixty times a second
+    window.addEventListener('pagehide', () => {
+      sessionStorage.setItem(STORE_KEY, current.toFixed(4));
+    });
+
+    layout();
+    raf = requestAnimationFrame(frame);
+    window.addEventListener('resize', layout);
+    window.addEventListener('load', layout);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      } else if (!raf) {
+        raf = requestAnimationFrame(frame);
+      }
+    });
+  } else if (track) {
+    track.style.display = 'none';
+  }
+</script>

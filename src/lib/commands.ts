@@ -14,10 +14,13 @@ export interface CommandContext {
 export type CommandResult =
   | { type: 'output'; html: string }
   | { type: 'clear' }
-  | { type: 'enter-chat'; html: string };
+  | { type: 'enter-chat'; html: string }
+  | { type: 'navigate'; html: string; href: string; delayMs: number };
 
 interface Command {
   description: string;
+  /** easter eggs don't appear in help */
+  hidden?: boolean;
   run: (ctx: CommandContext) => CommandResult;
 }
 
@@ -105,13 +108,23 @@ const commands: Record<string, Command> = {
       html: `Entering AI chat. Ask about my experience, projects, or interests.\nType 'exit' to return to the terminal.`,
     }),
   },
+  retro: {
+    description: 'Switch to the classic view',
+    hidden: true,
+    run: () => ({
+      type: 'navigate',
+      html: 'Switching to classic view... loading neurons...',
+      href: '/retro',
+      // message beat + the 860ms wormhole collapse ≈ the spec'd 1.5s
+      delayMs: 700,
+    }),
+  },
 };
 
 function helpText(): string {
-  const width = Math.max(...Object.keys(commands).map((name) => name.length)) + 3;
-  const rows = Object.entries(commands).map(
-    ([name, command]) => `  ${name.padEnd(width)}${command.description}`
-  );
+  const visible = Object.entries(commands).filter(([, command]) => !command.hidden);
+  const width = Math.max(...visible.map(([name]) => name.length)) + 3;
+  const rows = visible.map(([name, command]) => `  ${name.padEnd(width)}${command.description}`);
   return ['Available commands:', '', ...rows].join('\n');
 }
 

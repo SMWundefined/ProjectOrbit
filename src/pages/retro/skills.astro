@@ -1,0 +1,167 @@
+---
+// Skills & Certifications — one viewport. Skill categories on the left,
+// the certification ledger on the right (stacked on small screens).
+import PageTransition from '../../components/retro/PageTransition.astro';
+import { content } from '../../data/retro-content';
+---
+
+<PageTransition
+  title={`Skills — ${content.identity.name}`}
+  active="skills"
+  description={`${content.identity.name} — skills and certifications`}
+>
+  <section class="px-8 pt-16 pb-8 sm:px-16 lg:pt-20">
+    <div class="mx-auto max-w-5xl">
+      <p class="page-kicker mb-4 text-xs uppercase">05 — the instruments</p>
+      <h2 class="page-title">Skills & Certifications</h2>
+    </div>
+  </section>
+
+  <section class="px-8 pb-14 sm:px-16">
+    <div class="mx-auto grid max-w-5xl grid-cols-1 gap-x-16 gap-y-12 lg:grid-cols-[1fr_1.15fr]">
+      <!-- skills -->
+      <div>
+        {
+          content.skills.map((group) => (
+            <div class="sk-group">
+              <p class="sk-cat">{group.category}</p>
+              <ul class="sk-items">
+                {group.items.map((item) => (
+                  <li>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </div>
+
+      <!-- certifications -->
+      <ul class="m-0 list-none p-0">
+        {
+          content.certifications.map((cert) => (
+            <li class="cal-row">
+              <span class="cal-year">{cert.year}</span>
+              <span class="cal-name">{cert.name}</span>
+              <span class="cal-issuer">{cert.issuer}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+</PageTransition>
+
+<style>
+  .page-kicker {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    color: var(--retro-accent);
+    letter-spacing: 0.35em;
+  }
+
+  .page-kicker::before {
+    content: '';
+    width: 26px;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(201, 162, 39, 0.85), var(--retro-accent));
+  }
+
+  .page-title {
+    font-size: clamp(2.1rem, 5.5vw, 3.4rem);
+  }
+
+  /* ---- skills ----------------------------------------------------------- */
+
+  .sk-group {
+    padding: 1.05rem 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .sk-cat {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--retro-gray);
+    margin-bottom: 0.65rem;
+    transition: color var(--retro-dur-fast) ease;
+  }
+
+  .sk-group:hover .sk-cat {
+    color: #c9a227;
+  }
+
+  .sk-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .sk-items li {
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--retro-accent);
+    border: 1px solid rgba(3, 122, 104, 0.35);
+    border-radius: 9999px;
+    padding: 0.26rem 0.68rem;
+    transition:
+      border-color var(--retro-dur-fast) ease,
+      color var(--retro-dur-fast) ease;
+  }
+
+  .sk-items li:hover {
+    border-color: rgba(201, 162, 39, 0.55);
+    color: #c9a227;
+  }
+
+  /* ---- certifications ------------------------------------------------------ */
+
+  .cal-row {
+    display: flex;
+    align-items: baseline;
+    gap: 1.4rem;
+    padding: 0.72rem 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .cal-year {
+    font-family: var(--retro-font-display);
+    font-size: 0.78rem;
+    letter-spacing: 0.16em;
+    color: var(--retro-gray);
+    flex: 0 0 3rem;
+    transition: color var(--retro-dur-fast) ease;
+  }
+
+  .cal-row:hover .cal-year {
+    color: #c9a227;
+  }
+
+  .cal-name {
+    font-size: 0.9rem;
+    flex: 1;
+  }
+
+  .cal-issuer {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--retro-accent);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 640px) {
+    .cal-row {
+      flex-wrap: wrap;
+      gap: 0.3rem 1.2rem;
+    }
+    .cal-issuer {
+      flex-basis: 100%;
+      margin-left: 4.2rem;
+    }
+  }
+</style>

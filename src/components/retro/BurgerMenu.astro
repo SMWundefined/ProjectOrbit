@@ -7,15 +7,16 @@
 // crossing a wormhole, then the page changes.
 interface Props {
   /** key of the current page so the menu can mark it */
-  active?: 'about' | 'education' | 'experience' | 'projects' | 'contact';
+  active?: 'about' | 'education' | 'experience' | 'projects' | 'skills' | 'contact';
 }
 const { active } = Astro.props;
 
 const links = [
   { label: 'About', href: '/retro', key: 'about' },
-  { label: 'Education', href: '/retro/education', key: 'education' },
   { label: 'Experience', href: '/retro/experience', key: 'experience' },
+  { label: 'Education', href: '/retro/education', key: 'education' },
   { label: 'Projects', href: '/retro/projects', key: 'projects' },
+  { label: 'Skills & Certs', href: '/retro/skills', key: 'skills' },
   { label: 'Contact', href: '/retro/contact', key: 'contact' },
 ] as const;
 ---
@@ -54,8 +55,9 @@ const links = [
   /* ---- the black hole ------------------------------------------------ */
   #nav-burger {
     position: fixed;
-    top: 1.1rem;
-    right: 1.1rem;
+    top: 50%;
+    right: 1rem;
+    transform: translateY(-50%);
     z-index: 50;
     width: 64px;
     height: 64px;
@@ -201,7 +203,7 @@ const links = [
     place-items: center;
     background: rgba(0, 0, 0, 0.42);
     backdrop-filter: blur(5px) saturate(1.1);
-    clip-path: circle(0px at calc(100% - 3.1rem) 3.1rem);
+    clip-path: circle(0px at calc(100% - 3rem) 50%);
     visibility: hidden;
     transition:
       clip-path 600ms var(--retro-ease),
@@ -209,7 +211,7 @@ const links = [
   }
 
   #nav-overlay.open {
-    clip-path: circle(150% at calc(100% - 3.1rem) 3.1rem);
+    clip-path: circle(150% at calc(100% - 3rem) 50%);
     visibility: visible;
     transition:
       clip-path 700ms var(--retro-ease),
@@ -336,6 +338,7 @@ const links = [
     #nav-burger {
       top: 0.6rem;
       right: 0.6rem;
+      transform: none;
     }
     #nav-overlay {
       clip-path: circle(0px at calc(100% - 2.6rem) 2.6rem);

@@ -118,6 +118,187 @@
   animation: glow-drift 30s ease-in-out infinite alternate;
 }
 
+/* wormhole exit: the digital world collapses into a gravity well at the
+   center of the screen — a brief resistance, then the plunge */
+@keyframes term-collapse {
+  0% {
+    transform: scale(1) rotate(0deg);
+    filter: blur(0) brightness(1);
+    opacity: 1;
+  }
+  45% {
+    transform: scale(0.9) rotate(-1.2deg);
+    filter: blur(1px) brightness(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.015) rotate(10deg);
+    filter: blur(10px) brightness(1.5);
+    opacity: 0;
+  }
+}
+
+.term-warping {
+  animation: term-collapse 850ms cubic-bezier(0.55, 0, 0.95, 0.45) forwards;
+  transform-origin: 50% 50%;
+}
+
+/* the singularity at the center: ignites as everything falls in,
+   then swallows the light */
+.warp-core {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0);
+  /* the full palette over black — a small hot heart, then green, gold,
+     deep racing green, and darkness; never a wall of white */
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.85) 0%,
+    #3ddc84 16%,
+    #c9a227 36%,
+    #037a68 54%,
+    rgba(0, 36, 32, 0.8) 68%,
+    transparent 78%
+  );
+  box-shadow:
+    0 0 40px rgba(61, 220, 132, 0.8),
+    0 0 90px rgba(201, 162, 39, 0.4);
+}
+
+/* one arc: the corona ignites as the world feeds it, holds a beat as the
+   last light falls in, then EXPANDS — its glow thinning into the dark as
+   it becomes the space the tesseract strands are born from */
+@keyframes warp-core-become {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+  }
+  38% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+  48% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  100% {
+    opacity: 0.1;
+    transform: translate(-50%, -50%) scale(30);
+  }
+}
+
+.warp-core.flare {
+  animation: warp-core-become 1950ms cubic-bezier(0.55, 0, 0.3, 1) forwards;
+  z-index: 57;
+}
+
+/* the tesseract: after the collapse, a held breath of pure darkness
+   crossed by thin strands of light converging on the center — clean
+   geometry, no noise, the space between two worlds */
+.warp-tesseract {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.warp-tesseract.active {
+  animation: wt-hold 1250ms ease-in forwards;
+}
+
+@keyframes wt-hold {
+  0% {
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.wt-line {
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  left: 50%;
+  width: 1px;
+  opacity: 0;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    var(--c, rgba(61, 220, 132, 0.7)) 30%,
+    rgba(255, 255, 255, 0.95) 50%,
+    var(--c, rgba(61, 220, 132, 0.7)) 70%,
+    transparent
+  );
+}
+
+.wt-line.wt-h {
+  top: 50%;
+  bottom: auto;
+  left: -10%;
+  right: -10%;
+  width: auto;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--c, rgba(61, 220, 132, 0.7)) 30%,
+    rgba(255, 255, 255, 0.95) 50%,
+    var(--c, rgba(61, 220, 132, 0.7)) 70%,
+    transparent
+  );
+}
+
+/* strands are BORN at the corona and radiate outward — the expanding
+   light unfolding into geometry */
+.warp-tesseract.active .wt-line {
+  animation: wt-radiate 1150ms cubic-bezier(0.2, 0.6, 0.35, 1) var(--d, 0ms) forwards;
+}
+
+.warp-tesseract.active .wt-line.wt-h {
+  animation: wt-radiate-h 1150ms cubic-bezier(0.2, 0.6, 0.35, 1) var(--d, 0ms) forwards;
+}
+
+@keyframes wt-radiate {
+  0% {
+    transform: translateX(0) scaleY(0.12);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(var(--x, 30vw)) scaleY(1.05);
+    opacity: 0.5;
+  }
+}
+
+@keyframes wt-radiate-h {
+  0% {
+    transform: translateY(0) scaleX(0.12);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(var(--y, 20vh)) scaleX(1.05);
+    opacity: 0.5;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

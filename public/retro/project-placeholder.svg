@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" viewBox="0 0 640 400">
+  <rect width="640" height="400" fill="#000a08"/>
+  <g stroke="#037a68" stroke-opacity="0.25" stroke-width="1">
+    <path d="M0 100 H640 M0 200 H640 M0 300 H640 M160 0 V400 M320 0 V400 M480 0 V400" fill="none"/>
+  </g>
+  <g stroke="#037a68" stroke-opacity="0.6" fill="none" stroke-width="1.2">
+    <circle cx="320" cy="200" r="64"/>
+    <ellipse cx="320" cy="200" rx="118" ry="38" transform="rotate(-18 320 200)"/>
+  </g>
+  <circle cx="320" cy="200" r="5" fill="#037a68"/>
+  <circle cx="424" cy="172" r="3.4" fill="#c9a227"/>
+  <text x="320" y="330" text-anchor="middle" fill="#666769" font-family="Consolas, monospace" font-size="13" letter-spacing="6">PREVIEW INCOMING</text>
+</svg>

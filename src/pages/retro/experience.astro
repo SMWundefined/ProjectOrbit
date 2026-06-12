@@ -1,0 +1,53 @@
+---
+// Experience — timeline of roles, newest first, with skill pills.
+import PageTransition from '../../components/retro/PageTransition.astro';
+import Timeline from '../../components/retro/Timeline.astro';
+import type { TimelineItem } from '../../components/retro/Timeline.astro';
+import { content } from '../../data/retro-content';
+
+const items: TimelineItem[] = content.experience.map((entry) => ({
+  heading: entry.role,
+  subheading: `${entry.company} · ${entry.location}`,
+  period: entry.period,
+  bullets: entry.achievements,
+  tags: entry.skills,
+}));
+---
+
+<PageTransition
+  title={`Experience — ${content.identity.name}`}
+  active="experience"
+  description={`${content.identity.name} — experience`}
+>
+  <section class="px-8 pt-16 pb-6 sm:px-16 lg:pt-20">
+    <div class="mx-auto max-w-4xl">
+      <p class="page-kicker mb-4 text-xs uppercase">02 — the work</p>
+      <h2 class="page-title">Experience</h2>
+    </div>
+  </section>
+
+  <section class="px-6 pb-8 sm:px-12">
+    <Timeline items={items} />
+  </section>
+</PageTransition>
+
+<style>
+  .page-kicker {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    color: var(--retro-accent);
+    letter-spacing: 0.35em;
+  }
+
+  .page-kicker::before {
+    content: '';
+    width: 26px;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(201, 162, 39, 0.85), var(--retro-accent));
+  }
+
+  .page-title {
+    font-size: clamp(2.1rem, 5.5vw, 3.6rem);
+  }
+</style>

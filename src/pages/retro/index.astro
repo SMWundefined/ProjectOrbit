@@ -1,14 +1,14 @@
 ---
-// About — the landing page of the neural portfolio.
+// About — a single viewport, nothing to scroll. A scroll gesture departs
+// to Education via the fullpage engine in PageTransition.
 import PageTransition from '../../components/retro/PageTransition.astro';
 import { content } from '../../data/retro-content';
 
-const { identity } = content;
+const { identity, highlights } = content;
 ---
 
 <PageTransition title={identity.name} active="about" description={`${identity.name} — ${identity.title}`}>
-  <!-- Hero: one full viewport, type leads -->
-  <section class="relative flex min-h-screen flex-col justify-center px-6 sm:px-12 lg:px-24">
+  <section class="relative flex h-dvh flex-col justify-center overflow-hidden px-8 sm:px-16 lg:px-28">
     <div class="max-w-3xl">
       {
         identity.photo && (
@@ -21,11 +21,11 @@ const { identity } = content;
         )
       }
 
-      <p class="hero-kicker mb-5 text-xs uppercase" style="color: var(--retro-accent); letter-spacing: 0.35em;">
+      <p class="hero-kicker mb-5 text-xs uppercase">
         {identity.title}
       </p>
 
-      <h1 class="hero-name mb-8 leading-[1.05]">
+      <h1 class="hero-name mb-7 leading-[1.04]">
         {identity.name}
       </h1>
 
@@ -38,40 +38,122 @@ const { identity } = content;
           ))
         }
       </div>
+
+      <!-- the dial: three measures, no boxes, hairline dividers -->
+      <dl class="dial mt-12 flex flex-wrap">
+        {
+          highlights.map((h) => (
+            <div class="dial-item">
+              <dt class="dial-label">{h.label}</dt>
+              <dd class="dial-value">{h.value}</dd>
+            </div>
+          ))
+        }
+      </dl>
     </div>
 
-    <!-- scroll indicator -->
+    <!-- telemetry: a quiet cockpit readout, bottom left -->
+    <p class="telemetry absolute bottom-7 left-8 sm:left-16 lg:left-28">
+      <span class="telemetry-dot" aria-hidden="true"></span>
+      {identity.status}
+    </p>
+
+    <!-- continue: scroll, or touch the chevron -->
     <a
-      href="#continue"
-      class="scroll-hint absolute bottom-8 left-1/2 -translate-x-1/2"
-      aria-label="Scroll to continue"
+      href="/retro/education"
+      class="scroll-hint absolute bottom-6 left-1/2 -translate-x-1/2"
+      aria-label="Next: Education"
     >
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
         <path d="M4 7l6 6 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
       </svg>
     </a>
   </section>
-
-  <!-- the thread: a quiet hand-off to the next page -->
-  <section id="continue" class="flex min-h-[40vh] items-center justify-center px-6">
-    <a href="/retro/education" class="next-link group flex items-baseline gap-4">
-      <span class="text-xs uppercase" style="color: var(--retro-gray); letter-spacing: 0.3em;">next</span>
-      <span class="next-label text-2xl sm:text-3xl" style="font-family: var(--retro-font-display);">
-        Education
-      </span>
-      <span class="next-arrow text-2xl" style="color: var(--retro-accent);">→</span>
-    </a>
-  </section>
 </PageTransition>
 
 <style>
   .hero-name {
-    font-size: clamp(2.6rem, 8vw, 5.2rem);
+    font-size: clamp(2.6rem, 7.5vw, 5rem);
+  }
+
+  /* kicker: a short gold-to-green dash leads the title */
+  .hero-kicker {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    color: var(--retro-accent);
+    letter-spacing: 0.35em;
+  }
+
+  .hero-kicker::before {
+    content: '';
+    width: 26px;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(201, 162, 39, 0.85), var(--retro-accent));
   }
 
   .photo-ring {
     border: 1.5px solid var(--retro-accent);
     box-shadow: var(--retro-glow-soft);
+  }
+
+  /* ---- the dial: watch-face restraint, no cards ----------------------- */
+
+  .dial {
+    margin-left: 0;
+  }
+
+  .dial-item {
+    padding: 0.2rem 2.2rem 0.2rem 0;
+    margin-right: 2.2rem;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .dial-item:last-child {
+    border-right: none;
+    margin-right: 0;
+    padding-right: 0;
+  }
+
+  .dial-value {
+    font-family: var(--retro-font-display);
+    font-size: 1.65rem;
+    letter-spacing: var(--retro-tracking-wide);
+    margin: 0;
+  }
+
+  .dial-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--retro-gray);
+    margin-bottom: 0.45rem;
+    transition: color var(--retro-dur-fast) ease;
+  }
+
+  .dial-item:hover .dial-label {
+    color: #c9a227;
+  }
+
+  /* ---- telemetry -------------------------------------------------------- */
+
+  .telemetry {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.18em;
+    color: var(--retro-gray);
+  }
+
+  .telemetry-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background: #c9a227;
+    box-shadow: 0 0 8px rgba(201, 162, 39, 0.7);
+    animation: retro-pulse 2.6s ease-in-out infinite;
   }
 
   .scroll-hint {
@@ -81,46 +163,17 @@ const { identity } = content;
   }
 
   .scroll-hint:hover {
-    color: var(--retro-accent);
+    color: #c9a227;
   }
 
-  .next-link {
-    text-decoration: none;
-    color: var(--retro-text);
-  }
-
-  .next-label {
-    position: relative;
-    letter-spacing: var(--retro-tracking-wide);
-    transition: letter-spacing 450ms var(--retro-ease);
-  }
-
-  .next-label::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: -6px;
-    height: 1px;
-    width: 100%;
-    background: linear-gradient(90deg, var(--retro-accent), transparent);
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 450ms var(--retro-ease);
-  }
-
-  .group:hover .next-label {
-    letter-spacing: 0.18em;
-  }
-
-  .group:hover .next-label::after {
-    transform: scaleX(1);
-  }
-
-  .next-arrow {
-    transition: transform 450ms var(--retro-ease);
-  }
-
-  .group:hover .next-arrow {
-    transform: translateX(8px);
+  @media (max-width: 640px) {
+    .dial-item {
+      padding-right: 1.4rem;
+      margin-right: 1.4rem;
+      margin-bottom: 0.8rem;
+    }
+    .telemetry {
+      display: none; /* the hero breathes on small screens */
+    }
   }
 </style>

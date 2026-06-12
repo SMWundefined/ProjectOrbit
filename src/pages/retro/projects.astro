@@ -1,0 +1,406 @@
+---
+// Projects & Certifications. Projects sit in a clean 2-3 column grid,
+// each led by an orbiting glyph (one, two, or three rings); hovering a
+// project floats a preview image beside the cursor. Certifications are
+// a tight two-column ledger.
+import PageTransition from '../../components/retro/PageTransition.astro';
+import { content } from '../../data/retro-content';
+
+const PLACEHOLDER = '/retro/project-placeholder.svg';
+
+const projects = content.projects.map((p, i) => ({
+  ...p,
+  image: p.image ?? PLACEHOLDER,
+  rings: (i % 3) + 1,
+  tilt: (i * 37) % 180,
+}));
+---
+
+<PageTransition
+  title={`Projects — ${content.identity.name}`}
+  active="projects"
+  description={`${content.identity.name} — projects and certifications`}
+>
+  <div class="page-shell flex h-dvh flex-col overflow-hidden">
+  <section class="px-8 pt-14 pb-6 sm:px-16 lg:pt-16">
+    <div class="mx-auto max-w-5xl">
+      <p class="page-kicker mb-4 text-xs uppercase">04 — the collisions</p>
+      <h2 class="page-title">Projects</h2>
+    </div>
+  </section>
+
+  <section class="px-8 pb-10 sm:px-16">
+    <ol class="mx-auto grid max-w-5xl list-none grid-cols-1 gap-x-10 p-0 sm:grid-cols-2 xl:grid-cols-3">
+      {
+        projects.map((project) => (
+          <li class="pt-cell" data-image={project.image} style={`--tilt: ${project.tilt}deg`}>
+            <div class={`pt-glyph rings-${project.rings}`} aria-hidden="true">
+              <span class="pt-nucleus"></span>
+              <span class="pt-ring pt-ring-1"></span>
+              <span class="pt-ring pt-ring-2"></span>
+              <span class="pt-ring pt-ring-3"></span>
+              <span class="pt-orbit pt-orbit-1">
+                <span class="pt-electron pt-e-gold"></span>
+              </span>
+              <span class="pt-orbit pt-orbit-2">
+                <span class="pt-electron pt-e-teal"></span>
+              </span>
+            </div>
+            <h3 class="pt-name">
+              {project.link ? (
+                <a href={project.link} target="_blank" rel="noopener">
+                  {project.name}
+                  <span class="pt-ext" aria-hidden="true">
+                    ↗
+                  </span>
+                </a>
+              ) : (
+                project.name
+              )}
+            </h3>
+            <p class="pt-desc">{project.description}</p>
+            <ul class="pt-stack">
+              {project.stack.map((tech) => (
+                <li>{tech}</li>
+              ))}
+            </ul>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <!-- floating hover preview -->
+  <div id="pt-preview" aria-hidden="true">
+    <img src={PLACEHOLDER} alt="" width="320" height="200" />
+  </div>
+  </div>
+</PageTransition>
+
+<style>
+  .page-kicker {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    color: var(--retro-accent);
+    letter-spacing: 0.35em;
+  }
+
+  .page-kicker::before {
+    content: '';
+    width: 26px;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(201, 162, 39, 0.85), var(--retro-accent));
+  }
+
+  .page-title {
+    font-size: clamp(2.1rem, 5.5vw, 3.6rem);
+  }
+
+  /* small screens scroll; clipping the grid there would be worse */
+  @media (max-width: 1023px) {
+    .page-shell {
+      height: auto;
+      min-height: 100dvh;
+      overflow: visible;
+    }
+  }
+
+  /* ---- project cells: hairline-topped columns, no boxes ----------------- */
+
+  .pt-cell {
+    padding: 1.4rem 0 1.6rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    opacity: 0;
+    transform: translateY(18px);
+    transition:
+      opacity 700ms var(--retro-ease),
+      transform 700ms var(--retro-ease);
+  }
+
+  .pt-cell.in-view {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* the glyph: nucleus + up to three rings at different attitudes */
+  .pt-glyph {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    margin-bottom: 1.1rem;
+    transform: rotate(var(--tilt));
+  }
+
+  .pt-nucleus {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    margin: -2.5px;
+    border-radius: 9999px;
+    background: var(--retro-accent);
+    box-shadow: 0 0 8px rgba(3, 122, 104, 0.7);
+  }
+
+  .pt-ring {
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(3, 122, 104, 0.3);
+    border-radius: 9999px;
+    display: none;
+  }
+
+  /* ring attitudes: flat ellipse, near-PERPENDICULAR vertical ellipse,
+     and a tight tilted inner — different geometry per atom */
+  .pt-ring-1 {
+    transform: scaleY(0.42);
+  }
+
+  .pt-ring-2 {
+    transform: scaleX(0.36) rotate(9deg);
+  }
+
+  .pt-ring-3 {
+    inset: 9px;
+    transform: scaleY(0.34) rotate(-49deg);
+  }
+
+  .rings-1 .pt-ring-1,
+  .rings-2 .pt-ring-1,
+  .rings-2 .pt-ring-2,
+  .rings-3 .pt-ring-1,
+  .rings-3 .pt-ring-2,
+  .rings-3 .pt-ring-3 {
+    display: block;
+  }
+
+  .pt-orbit {
+    position: absolute;
+    inset: 4px;
+  }
+
+  .pt-orbit-1 {
+    transform: scaleY(0.42);
+    animation: pt-spin-1 5.5s linear infinite;
+  }
+
+  /* second electron rides the perpendicular ring, counter-rotating */
+  .pt-orbit-2 {
+    display: none;
+    transform: scaleX(0.36) rotate(9deg);
+    animation: pt-spin-2 3.8s linear infinite reverse;
+  }
+
+  .rings-2 .pt-orbit-2,
+  .rings-3 .pt-orbit-2 {
+    display: block;
+  }
+
+  .pt-electron {
+    position: absolute;
+    top: -1.5px;
+    left: 50%;
+    width: 3px;
+    height: 3px;
+    margin-left: -1.5px;
+    border-radius: 9999px;
+  }
+
+  .pt-e-gold {
+    background: #c9a227;
+    box-shadow: 0 0 6px rgba(201, 162, 39, 0.8);
+  }
+
+  .pt-e-teal {
+    background: var(--retro-accent);
+    box-shadow: 0 0 6px rgba(3, 122, 104, 0.85);
+  }
+
+  @keyframes pt-spin-1 {
+    to {
+      transform: scaleY(0.42) rotate(360deg);
+    }
+  }
+
+  @keyframes pt-spin-2 {
+    from {
+      transform: scaleX(0.36) rotate(9deg);
+    }
+    to {
+      transform: scaleX(0.36) rotate(369deg);
+    }
+  }
+
+  .pt-cell:hover .pt-orbit {
+    animation-duration: 1.2s;
+  }
+
+  .pt-cell:hover .pt-ring {
+    border-color: rgba(201, 162, 39, 0.45);
+  }
+
+  .pt-name {
+    font-size: 1.12rem;
+    margin-bottom: 0.45rem;
+    display: inline-block;
+    letter-spacing: var(--retro-tracking-wide);
+    transition: letter-spacing 450ms var(--retro-ease);
+  }
+
+  .pt-cell:hover .pt-name {
+    letter-spacing: 0.12em;
+  }
+
+  .pt-name a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .pt-ext {
+    color: var(--retro-accent);
+    font-size: 0.85em;
+    margin-left: 0.35rem;
+    transition: color var(--retro-dur-fast) ease;
+  }
+
+  .pt-name a:hover .pt-ext {
+    color: #c9a227;
+  }
+
+  .pt-desc {
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--retro-text-muted);
+    margin-bottom: 0.9rem;
+  }
+
+  .pt-stack {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .pt-stack li {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--retro-accent);
+    border: 1px solid rgba(3, 122, 104, 0.35);
+    border-radius: 9999px;
+    padding: 0.24rem 0.62rem;
+    transition:
+      border-color var(--retro-dur-fast) ease,
+      color var(--retro-dur-fast) ease;
+  }
+
+  .pt-stack li:hover {
+    border-color: rgba(201, 162, 39, 0.55);
+    color: #c9a227;
+  }
+
+  /* ---- floating preview -------------------------------------------------- */
+
+  #pt-preview {
+    position: fixed;
+    z-index: 45;
+    width: 320px;
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(0.96);
+    transition:
+      opacity 250ms var(--retro-ease),
+      transform 250ms var(--retro-ease);
+    border: 1px solid rgba(3, 122, 104, 0.35);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow:
+      0 18px 50px rgba(0, 0, 0, 0.65),
+      var(--retro-glow-soft);
+  }
+
+  #pt-preview.show {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  #pt-preview img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+</style>
+
+<script>
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const rows = document.querySelectorAll('.pt-cell');
+
+  if (reducedMotion) {
+    rows.forEach((row) => row.classList.add('in-view'));
+  } else {
+    const observer = new IntersectionObserver(
+      (observed) => {
+        for (const o of observed) {
+          if (o.isIntersecting) {
+            o.target.classList.add('in-view');
+            observer.unobserve(o.target);
+          }
+        }
+      },
+      { threshold: 0.2, rootMargin: '0px 0px -6% 0px' }
+    );
+    rows.forEach((row) => observer.observe(row));
+  }
+
+  // floating hover preview — pointer devices only
+  const preview = document.getElementById('pt-preview');
+  const previewImg = preview?.querySelector('img');
+  if (preview && previewImg && matchMedia('(hover: hover)').matches && !reducedMotion) {
+    let targetX = 0;
+    let targetY = 0;
+    let x = 0;
+    let y = 0;
+    let raf = 0;
+
+    const glide = (): void => {
+      x += (targetX - x) * 0.18;
+      y += (targetY - y) * 0.18;
+      preview.style.left = `${x.toFixed(1)}px`;
+      preview.style.top = `${y.toFixed(1)}px`;
+      raf = Math.abs(targetX - x) + Math.abs(targetY - y) > 0.4 ? requestAnimationFrame(glide) : 0;
+    };
+
+    document.querySelectorAll<HTMLElement>('.pt-cell').forEach((cell) => {
+      cell.addEventListener('pointerenter', (e) => {
+        previewImg.src = cell.dataset.image ?? '';
+        targetX = x = e.clientX + 26;
+        targetY = y = e.clientY - 110;
+        preview.classList.add('show');
+        if (!raf) raf = requestAnimationFrame(glide);
+      });
+      cell.addEventListener('pointermove', (e) => {
+        targetX = Math.min(e.clientX + 26, window.innerWidth - 340);
+        targetY = Math.max(16, e.clientY - 110);
+        if (!raf) raf = requestAnimationFrame(glide);
+      });
+      cell.addEventListener('pointerleave', () => {
+        preview.classList.remove('show');
+      });
+    });
+
+    // scrolling moves the page under a stationary cursor — hide the
+    // preview rather than letting it hang over the wrong row
+    window.addEventListener(
+      'scroll',
+      () => {
+        preview.classList.remove('show');
+      },
+      { passive: true }
+    );
+  }
+</script>

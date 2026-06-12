@@ -1,0 +1,420 @@
+---
+// Contact — the last page. Each channel has its own character: email is
+// the direct line, GitHub speaks monospace, LinkedIn carries the formal
+// record. Threads shows recent posts (template data until the live feed
+// is wired); the blog is teased. The life star goes supernova here.
+import PageTransition from '../../components/retro/PageTransition.astro';
+import { content } from '../../data/retro-content';
+
+const { contact, identity } = content;
+const github = contact.socials.find((s) => s.icon === 'github');
+const linkedin = contact.socials.find((s) => s.icon === 'linkedin');
+const year = new Date().getFullYear();
+---
+
+<PageTransition
+  title={`Contact — ${content.identity.name}`}
+  active="contact"
+  description={`${content.identity.name} — contact`}
+>
+  <div class="contact-shell flex h-dvh flex-col overflow-hidden px-8 sm:px-16 lg:px-28">
+    <section class="mx-auto w-full max-w-2xl pt-16 lg:pt-20">
+      <p class="page-kicker mb-4 text-xs uppercase">06 — the connection</p>
+      <h2 class="page-title mb-4">{contact.heading}</h2>
+      <p class="mb-8 max-w-md text-sm leading-relaxed sm:text-base" style="color: var(--retro-text-muted);">
+        {contact.note}
+      </p>
+
+      <!-- email: the direct line -->
+      <a href={`mailto:${contact.email}`} class="channel ch-mail">
+        <span class="channel-glyph" aria-hidden="true">
+          <span class="g-rest">@</span>
+          <span class="g-hover">✉</span>
+        </span>
+        <span class="channel-body">
+          <span class="channel-label">{contact.email}</span>
+          <span class="channel-sub">direct line</span>
+        </span>
+        <span class="channel-arrow" aria-hidden="true">↗</span>
+      </a>
+
+      {
+        github && (
+          <a href={github.url} target="_blank" rel="noopener" class="channel ch-code">
+            <span class="channel-glyph" aria-hidden="true">
+              {'</>'}
+            </span>
+            <span class="channel-body">
+              <span class="channel-label">
+                {github.label}
+                <span class="caret" aria-hidden="true">
+                  ▍
+                </span>
+              </span>
+              <span class="channel-sub">the source</span>
+            </span>
+            <span class="channel-arrow" aria-hidden="true">↗</span>
+          </a>
+        )
+      }
+
+      {
+        linkedin && (
+          <a href={linkedin.url} target="_blank" rel="noopener" class="channel ch-record">
+            <span class="channel-glyph" aria-hidden="true">in</span>
+            <span class="channel-body">
+              <span class="channel-label">{linkedin.label}</span>
+              <span class="channel-sub">the record</span>
+            </span>
+            <span class="seal" aria-hidden="true"></span>
+            <span class="channel-arrow" aria-hidden="true">↗</span>
+          </a>
+        )
+      }
+
+      <!-- the terminal: the other face of this site -->
+      <a href="/" class="channel ch-term">
+        <span class="channel-glyph" aria-hidden="true">&gt;_</span>
+        <span class="channel-body">
+          <span class="channel-label">The Terminal</span>
+          <span class="channel-sub">wsl mode</span>
+        </span>
+        <span class="channel-arrow" aria-hidden="true">↗</span>
+      </a>
+
+      <!-- the blog tease -->
+      <div class="channel ch-blog" aria-disabled="true">
+        <span class="channel-glyph" aria-hidden="true">✦</span>
+        <span class="channel-body">
+          <span class="channel-label">{contact.blog.label}</span>
+          <span class="channel-sub blog-note">{contact.blog.note}</span>
+        </span>
+      </div>
+
+      <!-- threads: recent transmissions -->
+      <div class="threads mt-8">
+        <div class="threads-head">
+          <a href={contact.threads.url} target="_blank" rel="noopener" class="threads-link">Threads</a>
+          <span class="threads-sync">live feed syncing soon</span>
+        </div>
+        <div class="threads-grid">
+          {
+            contact.threads.posts.map((post) => (
+              <article class="thread-card">
+                <p class="thread-text">{post.text}</p>
+                <p class="thread-date">{post.date}</p>
+              </article>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer-line mx-auto mt-auto flex w-full max-w-2xl items-center justify-between pt-6 pb-5">
+      <span>© {year} {identity.name}</span>
+      <span class="footer-mono">transmission channels open</span>
+    </footer>
+  </div>
+</PageTransition>
+
+<style>
+  .page-kicker {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    color: var(--retro-accent);
+    letter-spacing: 0.35em;
+  }
+
+  .page-kicker::before {
+    content: '';
+    width: 26px;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(201, 162, 39, 0.85), var(--retro-accent));
+  }
+
+  .page-title {
+    font-size: clamp(2.3rem, 6vw, 4rem);
+  }
+
+  /* ---- channels ----------------------------------------------------------- */
+
+  .channel {
+    display: flex;
+    align-items: center;
+    gap: 1.3rem;
+    padding: 0.78rem 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    text-decoration: none;
+    color: var(--retro-text);
+  }
+
+  .ch-blog {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    cursor: default;
+  }
+
+  .channel-glyph {
+    position: relative;
+    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+    font-size: 0.8rem;
+    color: var(--retro-accent);
+    flex: 0 0 2.6rem;
+    transition: color var(--retro-dur-fast) ease;
+  }
+
+  .channel:hover .channel-glyph {
+    color: #c9a227;
+  }
+
+  .channel-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .channel-label {
+    position: relative;
+    font-family: var(--retro-font-display);
+    font-size: 1.08rem;
+    letter-spacing: var(--retro-tracking-wide);
+    transition:
+      letter-spacing 450ms var(--retro-ease),
+      font-family 0s;
+  }
+
+  .ch-mail .channel-label {
+    font-size: clamp(1.1rem, 3vw, 1.4rem);
+  }
+
+  .channel-sub {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.24em;
+    color: var(--retro-gray);
+    transition: color var(--retro-dur-fast) ease;
+  }
+
+  .channel:hover .channel-sub {
+    color: var(--retro-accent);
+  }
+
+  .channel-arrow {
+    margin-left: auto;
+    color: var(--retro-gray);
+    transition:
+      transform 450ms var(--retro-ease),
+      color 450ms ease;
+  }
+
+  .channel:hover .channel-arrow {
+    color: #c9a227;
+  }
+
+  /* email: the letter takes flight */
+  .g-rest,
+  .g-hover {
+    transition: opacity var(--retro-dur-fast) ease;
+  }
+  .g-hover {
+    position: absolute;
+    left: 0;
+    opacity: 0;
+  }
+  .ch-mail:hover .g-rest {
+    opacity: 0;
+  }
+  .ch-mail:hover .g-hover {
+    opacity: 1;
+  }
+  .ch-mail:hover .channel-arrow {
+    transform: translate(7px, -6px);
+  }
+
+  /* github: it speaks monospace, caret blinking */
+  .caret {
+    color: var(--retro-accent);
+    opacity: 0;
+    margin-left: 2px;
+  }
+  .ch-code:hover .channel-label {
+    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+    letter-spacing: 0.04em;
+    font-size: 1rem;
+  }
+  .ch-code:hover .caret {
+    opacity: 1;
+    animation: caret-blink 0.85s steps(1) infinite;
+  }
+  @keyframes caret-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  /* linkedin: the gold seal of the formal record */
+  .seal {
+    width: 9px;
+    height: 9px;
+    border-radius: 9999px;
+    border: 1.5px solid #c9a227;
+    opacity: 0;
+    transform: scale(0.4);
+    transition:
+      opacity 350ms var(--retro-ease),
+      transform 350ms var(--retro-ease);
+  }
+  .ch-record:hover .seal {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(201, 162, 39, 0.5);
+  }
+
+  /* the terminal: it answers in green monospace */
+  .ch-term:hover .channel-label {
+    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+    font-size: 0.95rem;
+    letter-spacing: 0.06em;
+    color: #3ddc84;
+  }
+  .ch-term:hover .channel-glyph {
+    color: #3ddc84;
+  }
+
+  /* blog: gold whisper at rest — but hover, and it bleeds Mars red.
+     Red Rising gets its own palette, only while you're touching it. */
+  .ch-blog .channel-glyph {
+    color: #c9a227;
+    transition:
+      color var(--retro-dur-fast) ease,
+      text-shadow var(--retro-dur) ease;
+  }
+  .blog-note {
+    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+    color: rgba(201, 162, 39, 0.75);
+    transition: color var(--retro-dur-fast) ease;
+  }
+
+  .ch-blog:hover .channel-glyph {
+    color: #c1440e;
+    text-shadow: 0 0 14px rgba(193, 68, 14, 0.8);
+  }
+
+  .ch-blog:hover .channel-label {
+    background: linear-gradient(110deg, #c1440e 20%, #e8b04b 40%, #ff5e2e 60%, #c1440e 80%);
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: rr-shine 1.8s linear infinite;
+  }
+
+  .ch-blog:hover .blog-note {
+    color: rgba(255, 94, 46, 0.85);
+  }
+
+  @keyframes rr-shine {
+    from {
+      background-position: 220% 0;
+    }
+    to {
+      background-position: -20% 0;
+    }
+  }
+
+  /* ---- threads ---------------------------------------------------------------- */
+
+  .threads-head {
+    display: flex;
+    align-items: baseline;
+    gap: 1.2rem;
+    margin-bottom: 1.1rem;
+  }
+
+  .threads-link {
+    font-family: var(--retro-font-display);
+    font-size: 1.05rem;
+    letter-spacing: var(--retro-tracking-wide);
+    color: var(--retro-text);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(3, 122, 104, 0.5);
+    padding-bottom: 2px;
+    transition: border-color var(--retro-dur-fast) ease;
+  }
+
+  .threads-link:hover {
+    border-color: #c9a227;
+  }
+
+  .threads-sync {
+    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.22em;
+    color: var(--retro-gray);
+    text-transform: uppercase;
+  }
+
+  .threads-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.9rem;
+  }
+
+  @media (min-width: 640px) {
+    .threads-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .thread-card {
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 10px;
+    padding: 1.1rem 1.2rem;
+    background: rgba(255, 255, 255, 0.015);
+    transition:
+      border-color var(--retro-dur) ease,
+      box-shadow var(--retro-dur) ease;
+  }
+
+  .thread-card:hover {
+    border-color: rgba(3, 122, 104, 0.4);
+    box-shadow: var(--retro-glow-soft);
+  }
+
+  .thread-text {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--retro-text-muted);
+    margin-bottom: 0.7rem;
+  }
+
+  .thread-date {
+    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: var(--retro-gray);
+  }
+
+  /* ---- footer ------------------------------------------------------------------- */
+
+  .footer-line {
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    color: var(--retro-gray);
+  }
+
+  .footer-mono {
+    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.22em;
+  }
+
+  /* small screens get to scroll — clipping content there would be worse */
+  @media (max-width: 640px) {
+    .contact-shell {
+      height: auto;
+      min-height: 100dvh;
+      overflow: visible;
+    }
+  }
+</style>

@@ -189,6 +189,10 @@ export function initTerminal(): void {
     } else if (result.type === 'enter-chat') {
       print(raw, result.html);
       setMode('chat');
+    } else if (result.type === 'navigate') {
+      print(raw, result.html);
+      busy = true; // the terminal is leaving — no more input
+      window.setTimeout(() => warpTo(result.href), result.delayMs);
     } else {
       print(raw, result.html);
     }
@@ -244,6 +248,35 @@ export function initTerminal(): void {
       e.preventDefault();
       complete();
     }
+  });
+
+  // Wormhole exit to the classic site: the page collapses into a gravity
+  // well at center screen while the singularity flares, then navigates.
+  function warpTo(href: string): void {
+    const page = document.getElementById('term-page');
+    const core = document.getElementById('warp-core');
+    const tesseract = document.getElementById('warp-tesseract');
+    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // the retro side picks these up for its matching expand-in
+    sessionStorage.setItem('orbit-nav', '1');
+    sessionStorage.setItem('orbit-warp-in', '1');
+    if (reducedMotion || !page) {
+      location.assign(href);
+      return;
+    }
+    // one arc: the world collapses into the corona; the corona holds a
+    // beat, then expands — and its light unfolds into the tesseract
+    // strands that carry you out the other side
+    page.classList.add('term-warping');
+    core?.classList.add('flare');
+    window.setTimeout(() => tesseract?.classList.add('active'), 820);
+    window.setTimeout(() => location.assign(href), 2050);
+  }
+
+  // The title bar X is the same door
+  document.getElementById('term-close')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    warpTo('/retro');
   });
 
   // Focus management: preventScroll stops the browser from yanking the

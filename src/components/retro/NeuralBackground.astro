@@ -124,6 +124,26 @@
       gravity.on = false;
     });
 
+    // a supernova somewhere on the page: radial impulse through the whole
+    // field, strongest near the blast, and every cluster lights up
+    window.addEventListener('orbit:supernova', ((e: CustomEvent) => {
+      const bx = e.detail?.x ?? 0;
+      const by = e.detail?.y ?? 0;
+      const reach = Math.max(width, height) * 1.2;
+      const now = performance.now();
+      for (const p of particles) {
+        const dx = p.x - bx;
+        const dy = p.y - by;
+        const d = Math.hypot(dx, dy) || 1;
+        const force = Math.max(0, 1 - d / reach) * 3.4;
+        p.vx += (dx / d) * force;
+        p.vy += (dy / d) * force;
+      }
+      for (const c of clusters) {
+        if (c.alive) c.litUntil = now + CLUSTER_FLASH_MS;
+      }
+    }) as EventListener);
+
     function aliveClusters(): number[] {
       return clusters.map((c, i) => (c.alive ? i : -1)).filter((i) => i >= 0);
     }
@@ -158,6 +178,49 @@
       return alive[alive.length - 1];
     }
 
+    // the field survives page changes: state is stashed on departure and
+    // restored on arrival, so the same clusters keep drifting seamlessly
+    const FIELD_KEY = 'orbit-field';
+    let restoredOnce = false;
+
+    function tryRestore(): boolean {
+      if (restoredOnce) return false;
+      restoredOnce = true;
+      try {
+        const raw = sessionStorage.getItem(FIELD_KEY);
+        if (!raw) return false;
+        const saved = JSON.parse(raw) as { w: number; h: number; clusters: Cluster[]; particles: Particle[] };
+        if (Math.abs(saved.w - width) > 80 || Math.abs(saved.h - height) > 80) return false;
+        clusters = saved.clusters;
+        particles = saved.particles;
+        const now = performance.now();
+        // timestamps don't carry across documents — sanitize them
+        for (const c of clusters) {
+          c.litUntil = 0;
+          c.chargeMs = 0;
+          if (!c.alive) c.respawnAt = now + 9000;
+        }
+        for (const p of particles) {
+          if (p.migrating) p.settleAt = now + 3000;
+        }
+        pulses.length = 0;
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    window.addEventListener('pagehide', () => {
+      try {
+        sessionStorage.setItem(
+          FIELD_KEY,
+          JSON.stringify({ w: width, h: height, clusters, particles })
+        );
+      } catch {
+        // storage full or unavailable — the next page reseeds, no harm
+      }
+    });
+
     function resize(): void {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       width = window.innerWidth;
@@ -165,7 +228,7 @@
       canvas!.width = Math.floor(width * dpr);
       canvas!.height = Math.floor(height * dpr);
       ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
-      seed();
+      if (!tryRestore()) seed();
     }
 
     function placeHeart(minSep: number): [number, number] {

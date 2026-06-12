@@ -29,6 +29,13 @@ export interface Project {
   stack: string[];
   /** optional external link (repo, demo, paper) */
   link?: string;
+  /** hover preview image under public/ — template placeholder until you add real shots */
+  image?: string;
+}
+
+export interface ThreadPost {
+  text: string;
+  date: string;
 }
 
 export interface Certification {
@@ -37,11 +44,25 @@ export interface Certification {
   year: string;
 }
 
+export interface SkillCategory {
+  category: string;
+  items: string[];
+}
+
 export interface SocialLink {
   label: string;
   url: string;
   /** icon key rendered by the contact page */
   icon: 'github' | 'linkedin' | 'email' | 'website' | 'threads';
+}
+
+export interface Highlight {
+  /** the big line, e.g. "8+ yrs" */
+  value: string;
+  /** what it measures, e.g. "Reliability engineering" */
+  label: string;
+  /** optional supporting line */
+  detail?: string;
 }
 
 export interface RetroContent {
@@ -52,16 +73,31 @@ export interface RetroContent {
     bio: string[];
     /** optional path under public/, e.g. "/profile.jpg" */
     photo?: string;
+    /** cockpit status line, bottom of the hero — keep it short and SRE-flavored */
+    status: string;
   };
+  /** three quick-glance stats inlined in the About hero */
+  highlights: Highlight[];
   education: TimelineEntry[];
   experience: ExperienceEntry[];
   projects: Project[];
+  skills: SkillCategory[];
   certifications: Certification[];
   contact: {
     heading: string;
     note: string;
     email: string;
     socials: SocialLink[];
+    /** recent Threads posts — template data until the live feed is wired */
+    threads: {
+      url: string;
+      posts: ThreadPost[];
+    };
+    /** the blog teaser line */
+    blog: {
+      label: string;
+      note: string;
+    };
   };
 }
 
@@ -77,7 +113,16 @@ export const content: RetroContent = {
     ],
     // TODO: drop a photo in public/ and set the path, or remove
     photo: undefined,
+    // TODO: your own telemetry one-liner
+    status: 'ALL SYSTEMS NOMINAL · SLO 99.99 · us-east-1',
   },
+
+  highlights: [
+    // TODO: your three signature numbers/facts
+    { value: '8+ yrs', label: 'Reliability engineering', detail: 'Keeping mission-critical systems honest' },
+    { value: 'CKA', label: 'Kubernetes certified', detail: 'And leading cross-team container initiatives' },
+    { value: 'Ph.D.', label: 'In progress', detail: 'AI and information infrastructure' },
+  ],
 
   education: [
     // TODO: replace with your 3 schools (most recent first)
@@ -166,6 +211,15 @@ export const content: RetroContent = {
     { name: 'Infant Monitor System', description: 'IoT monitoring with cloud alerts on a Raspberry Pi.', stack: ['AWS IoT', 'MQTT', 'Raspberry Pi'] },
   ],
 
+  skills: [
+    // TODO: replace with your skill categories
+    { category: 'Languages', items: ['Python', 'Go', 'TypeScript', 'Bash', 'SQL'] },
+    { category: 'Cloud', items: ['AWS', 'GCP', 'Serverless'] },
+    { category: 'Infrastructure', items: ['Kubernetes', 'Terraform', 'Helm', 'Docker', 'Ansible'] },
+    { category: 'Data & Messaging', items: ['PostgreSQL', 'Redis', 'Kafka', 'MongoDB'] },
+    { category: 'AI Stack', items: ['RAG', 'Embeddings', 'Vector DBs', 'LangChain'] },
+  ],
+
   certifications: [
     // TODO: replace with your 10 certifications
     { name: 'Certified Kubernetes Administrator (CKA)', issuer: 'CNCF', year: '2023' },
@@ -190,7 +244,20 @@ export const content: RetroContent = {
       // TODO: your real links
       { label: 'GitHub', url: 'https://github.com/example', icon: 'github' },
       { label: 'LinkedIn', url: 'https://linkedin.com/in/example', icon: 'linkedin' },
-      { label: 'Website', url: 'https://example.com', icon: 'website' },
     ],
+    threads: {
+      // TODO: your Threads profile URL; posts below are templates until
+      // the live feed is wired in a later session
+      url: 'https://threads.net/@example',
+      posts: [
+        { text: 'Spent the weekend teaching my homelab to self-heal. It now files better incident reports than I do.', date: '2d' },
+        { text: 'Hot take: the best SRE tooling is the runbook you never need to open.', date: '1w' },
+      ],
+    },
+    blog: {
+      label: 'The Blogsphere',
+      // a Red Rising nod — the Society's motto
+      note: 'per aspera ad astra — coming soon',
+    },
   },
 };

@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 /*
   /retro design system — neural night-space.
   Tailwind handles layout; everything visual lives in these tokens and
@@ -52,6 +54,33 @@
 .retro-page ::selection {
   background: var(--retro-accent);
   color: var(--retro-bg);
+}
+
+/* scrollbar: a hairline of the theme, not browser chrome.
+   The document scrollbar lives on <html>, hence :has(). */
+html:has(body.retro-page) {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(3, 122, 104, 0.35) transparent;
+  /* reserve the gutter permanently: the scrollbar appearing/disappearing
+     between pages never shifts layout — a major source of jitter */
+  scrollbar-gutter: stable;
+}
+
+html:has(body.retro-page)::-webkit-scrollbar {
+  width: 5px;
+}
+
+html:has(body.retro-page)::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html:has(body.retro-page)::-webkit-scrollbar-thumb {
+  background: rgba(3, 122, 104, 0.35);
+  border-radius: 9999px;
+}
+
+html:has(body.retro-page)::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 162, 39, 0.5);
 }
 
 /* ---- shared animations ---------------------------------------------- */

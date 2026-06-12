@@ -1,0 +1,382 @@
+---
+// Reusable vertical timeline.
+//
+// The spine is a gently curved SVG path (never a straight wire), nodes
+// fire like neurons as entries enter the viewport, and a star travels
+// the spine tied to scroll — living the real stellar lifecycle as it
+// descends: NEBULA -> PROTOSTAR -> MAIN SEQUENCE -> RED GIANT -> CORE
+// COLLAPSE -> SUPERNOVA -> NEUTRON STAR (the remnant, pulsing) at the
+// end. Scroll back up and it un-lives it. IntersectionObserver + rAF,
+// no libraries.
+
+export interface TimelineItem {
+  heading: string;
+  subheading: string;
+  period: string;
+  bullets: string[];
+  /** optional skill pills */
+  tags?: string[];
+}
+
+interface Props {
+  items: TimelineItem[];
+}
+const { items } = Astro.props;
+---
+
+<div class="tl-wrap">
+  <svg class="tl-spine" aria-hidden="true" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="tl-spine-fade" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="rgba(3,122,104,0)"></stop>
+        <stop offset="0.06" stop-color="rgba(3,122,104,0.5)"></stop>
+        <stop offset="0.94" stop-color="rgba(3,122,104,0.5)"></stop>
+        <stop offset="1" stop-color="rgba(3,122,104,0)"></stop>
+      </linearGradient>
+    </defs>
+    <path fill="none" stroke="url(#tl-spine-fade)" stroke-width="1"></path>
+  </svg>
+
+  <ol class="timeline">
+    {
+      items.map((item, i) => (
+        <li class={`tl-entry ${i % 2 === 0 ? 'tl-left' : 'tl-right'}`}>
+          <span class="tl-node" aria-hidden="true" />
+          <p class="tl-period">{item.period}</p>
+          <div class="tl-body">
+            <h3 class="tl-heading">{item.heading}</h3>
+            <p class="tl-sub">{item.subheading}</p>
+            <ul class="tl-bullets">
+              {item.bullets.map((b) => (
+                <li>{b}</li>
+              ))}
+            </ul>
+            {item.tags && (
+              <ul class="tl-tags">
+                {item.tags.map((t) => (
+                  <li>{t}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </li>
+      ))
+    }
+  </ol>
+</div>
+
+<style>
+  .tl-wrap {
+    position: relative;
+    margin: 0 auto;
+    max-width: 56rem;
+  }
+
+  .tl-spine {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .timeline {
+    position: relative;
+    list-style: none;
+    margin: 0;
+    padding: 1.6rem 0 2.4rem;
+  }
+
+  /* ---- entries ----------------------------------------------------------- */
+
+  .tl-entry {
+    position: relative;
+    width: 50%;
+    padding: 0 3.4rem 2.6rem;
+    opacity: 0;
+    transition:
+      opacity 700ms var(--retro-ease),
+      transform 700ms var(--retro-ease);
+  }
+
+  .tl-left {
+    left: 0;
+    transform: translateX(-26px);
+  }
+
+  .tl-right {
+    left: 50%;
+    transform: translateX(26px);
+  }
+
+  .tl-entry.in-view {
+    opacity: 1;
+    transform: none;
+  }
+
+  .tl-node {
+    position: absolute;
+    top: 0.45rem;
+    width: 9px;
+    height: 9px;
+    border-radius: 9999px;
+    background: var(--retro-bg);
+    border: 1px solid rgba(3, 122, 104, 0.6);
+    transition:
+      background var(--retro-dur) ease,
+      border-color var(--retro-dur) ease,
+      box-shadow var(--retro-dur) ease,
+      transform var(--retro-dur) var(--retro-ease);
+  }
+
+  .tl-left .tl-node {
+    right: -4.5px;
+  }
+
+  .tl-right .tl-node {
+    left: -4.5px;
+  }
+
+  .tl-entry.in-view .tl-node {
+    background: var(--retro-accent);
+    border-color: var(--retro-accent);
+    animation: retro-node-fire 1.1s var(--retro-ease) 1;
+    box-shadow: var(--retro-glow-soft);
+  }
+
+  .tl-period {
+    position: absolute;
+    top: 0.2rem;
+    font-family: var(--retro-font-display);
+    font-size: 0.8rem;
+    letter-spacing: 0.16em;
+    color: var(--retro-gray);
+    white-space: nowrap;
+    transition: color var(--retro-dur-fast) ease;
+  }
+
+  .tl-left .tl-period {
+    left: calc(100% + 3.4rem);
+  }
+
+  .tl-right .tl-period {
+    right: calc(100% + 3.4rem);
+  }
+
+  .tl-heading {
+    font-size: 1.25rem;
+    margin-bottom: 0.4rem;
+    display: inline-block;
+    position: relative;
+  }
+
+  /* hover: the pathway draws beneath the heading */
+  .tl-heading::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -5px;
+    height: 1px;
+    width: 100%;
+    background: linear-gradient(90deg, var(--retro-accent), rgba(201, 162, 39, 0.65), transparent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 450ms var(--retro-ease);
+  }
+
+  .tl-sub {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--retro-accent);
+    margin-bottom: 0.9rem;
+    transition: letter-spacing 450ms var(--retro-ease);
+  }
+
+  /* whole-entry hover: period golds, heading underlines, node surges,
+     subheading stretches a breath — the entry wakes up */
+  .tl-entry:hover .tl-period {
+    color: #c9a227;
+  }
+
+  .tl-entry:hover .tl-heading::after {
+    transform: scaleX(1);
+  }
+
+  .tl-entry:hover .tl-sub {
+    letter-spacing: 0.24em;
+  }
+
+  .tl-entry:hover .tl-node {
+    transform: scale(1.45);
+    box-shadow:
+      var(--retro-glow-soft),
+      0 0 14px rgba(201, 162, 39, 0.25);
+  }
+
+  .tl-bullets {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  .tl-bullets li {
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: var(--retro-text-muted);
+    padding-left: 1.1rem;
+    position: relative;
+  }
+
+  .tl-bullets li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.72em;
+    width: 9px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--retro-accent), transparent);
+    transition: width var(--retro-dur-fast) ease;
+  }
+
+  .tl-entry:hover .tl-bullets li::before {
+    width: 14px;
+  }
+
+  .tl-tags {
+    list-style: none;
+    padding: 0;
+    margin: 1.1rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .tl-tags li {
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--retro-accent);
+    border: 1px solid rgba(3, 122, 104, 0.35);
+    border-radius: 9999px;
+    padding: 0.28rem 0.7rem;
+    transition:
+      border-color var(--retro-dur-fast) ease,
+      color var(--retro-dur-fast) ease;
+  }
+
+  .tl-tags li:hover {
+    border-color: rgba(201, 162, 39, 0.55);
+    color: #c9a227;
+  }
+
+  /* ---- mobile: single column, spine on the left ----------------------- */
+  @media (max-width: 768px) {
+    .tl-entry,
+    .tl-left,
+    .tl-right {
+      width: 100%;
+      left: 0;
+      padding: 0 0 3.4rem 2.4rem;
+      transform: translateY(20px);
+    }
+
+    .tl-left .tl-period,
+    .tl-right .tl-period {
+      position: static;
+      display: block;
+      margin-bottom: 0.4rem;
+    }
+
+    .tl-star-label {
+      transform: translate(12px, -50%);
+    }
+  }
+</style>
+
+<script>
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---- entry reveal -------------------------------------------------------
+  const entries = document.querySelectorAll('.tl-entry');
+  if (reducedMotion) {
+    entries.forEach((entry) => entry.classList.add('in-view'));
+  } else {
+    const observer = new IntersectionObserver(
+      (observed) => {
+        for (const o of observed) {
+          if (o.isIntersecting) {
+            o.target.classList.add('in-view');
+            observer.unobserve(o.target);
+          }
+        }
+      },
+      { threshold: 0.25, rootMargin: '0px 0px -8% 0px' }
+    );
+    entries.forEach((entry) => observer.observe(entry));
+  }
+
+  // ---- curved spine: pin nodes and periods onto the sine ------------------
+  const wrap = document.querySelector<HTMLElement>('.tl-wrap');
+  const spinePath = document.querySelector<SVGPathElement>('.tl-spine path');
+
+  if (wrap && spinePath) {
+    const mobile = () => window.innerWidth <= 768;
+    let W = 0;
+    let H = 0;
+
+    // the curve: a slow sine sway around the spine axis
+    const curveX = (y: number): number => {
+      const cx = mobile() ? 6 : W / 2;
+      const amp = mobile() ? 5 : 16;
+      return cx + amp * Math.sin(y * 0.006 + 1.4);
+    };
+
+    function layout(): void {
+      W = wrap!.clientWidth;
+      H = wrap!.clientHeight;
+      const svg = spinePath!.ownerSVGElement!;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+      // build the path in 24px steps
+      let d = `M ${curveX(0).toFixed(1)} 0`;
+      for (let y = 24; y <= H; y += 24) {
+        d += ` L ${curveX(y).toFixed(1)} ${y.toFixed(1)}`;
+      }
+      spinePath!.setAttribute('d', d);
+
+      // pin each node onto the curve at its own height, and align the
+      // floating period to its node — vertically centered, fixed gap
+      const wrapRect = wrap!.getBoundingClientRect();
+      document.querySelectorAll<HTMLElement>('.tl-entry').forEach((li) => {
+        const node = li.querySelector<HTMLElement>('.tl-node');
+        if (!node) return;
+        const liRect = li.getBoundingClientRect();
+        const nodeY = liRect.top - wrapRect.top + 11;
+        const x = curveX(nodeY) - (liRect.left - wrapRect.left);
+        node.style.left = `${(x - 4.5).toFixed(1)}px`;
+        node.style.right = 'auto';
+
+        const period = li.querySelector<HTMLElement>('.tl-period');
+        if (period && !mobile()) {
+          const nodeCenterY = node.offsetTop + 4.5;
+          period.style.top = `${(nodeCenterY - period.offsetHeight / 2).toFixed(1)}px`;
+          period.style.right = 'auto';
+          if (li.classList.contains('tl-left')) {
+            period.style.left = `${(x + 24).toFixed(1)}px`;
+          } else {
+            period.style.left = `${(x - 28 - period.offsetWidth).toFixed(1)}px`;
+          }
+        }
+      });
+    }
+
+    layout();
+    window.addEventListener('resize', layout);
+    // re-run once everything has settled (fonts, late layout)
+    window.addEventListener('load', layout);
+  }
+</script>
