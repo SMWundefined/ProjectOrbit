@@ -1,0 +1,48 @@
+# Local development stack: Astro server + RAG sidecar.
+# Not included: Ollama (runs as a host service — OLLAMA_HOST below points
+# containers at it) and Groq (just an API key in .env, no container).
+#
+# First run:
+#   docker compose build
+#   docker compose run --rm rag-sidecar python scripts/ingest.py
+#   docker compose up
+
+services:
+  astro:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PUBLIC_SITE_TITLE: ${PUBLIC_SITE_TITLE:-}
+        PUBLIC_TERMINAL_USER: ${PUBLIC_TERMINAL_USER:-}
+        PUBLIC_TERMINAL_HOST: ${PUBLIC_TERMINAL_HOST:-}
+        PUBLIC_GITHUB_URL: ${PUBLIC_GITHUB_URL:-}
+        PUBLIC_LINKEDIN_URL: ${PUBLIC_LINKEDIN_URL:-}
+        PUBLIC_CONTACT_EMAIL: ${PUBLIC_CONTACT_EMAIL:-}
+        PUBLIC_WEBSITE_URL: ${PUBLIC_WEBSITE_URL:-}
+    ports:
+      - "4321:4321"
+    env_file: .env
+    environment:
+      # service-name DNS inside the compose network
+      RAG_SERVER_URL: http://rag-sidecar:8001
+      # reach the host's Ollama from inside the container (fallback path)
+      OLLAMA_HOST: http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - rag-sidecar
+    restart: unless-stopped
+
+  rag-sidecar:
+    build:
+      context: .
+      dockerfile: Dockerfile.rag
+    env_file: .env
+    environment:
+      RAG_SERVER_HOST: 0.0.0.0
+    volumes:
+      - ./chroma_db:/app/chroma_db
+      - ./src/data:/app/src/data:ro
+    # no ports: -- the sidecar is reachable only inside the compose network
+    restart: unless-stopped

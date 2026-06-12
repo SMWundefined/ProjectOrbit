@@ -1,0 +1,21 @@
+# Never bake secrets or local state into image layers
+.env
+.env.*
+chroma_db/
+
+# personal data — mounted as a volume where needed, never copied in
+**/professional.md
+**/community.md
+**/personal.md
+node_modules/
+dist/
+.astro/
+.git/
+.github/
+.vscode/
+output/
+assets/
+**/__pycache__/
+*.pyc
+.venv/
+venv/

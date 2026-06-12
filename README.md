@@ -135,6 +135,28 @@ scripts/rag_server.py           localhost retrieval sidecar
 scripts/README-scripts.md       pipeline details and expected output
 ```
 
+## Docker
+
+Run the whole stack (Astro server + RAG sidecar) in containers:
+
+```bash
+docker compose build                                       # one-time / after changes
+docker compose run --rm rag-sidecar python scripts/ingest.py   # build the vector store
+docker compose up                                          # http://localhost:4321
+```
+
+Notes:
+
+- `.env` is read at container start (secrets are never baked into images;
+  see `.dockerignore`). `PUBLIC_*` values pass as build args because they
+  are inlined into the static HTML.
+- ChromaDB (`chroma_db/`) and `src/data/` mount as volumes — re-run the
+  ingest one-liner after editing data files.
+- Ollama is **not** containerized; the compose file points the fallback at
+  the host's Ollama via `host.docker.internal`. Groq needs no container.
+- Without Docker, everything still runs natively: `npm run dev` +
+  `python scripts/rag_server.py` (see Quick start).
+
 ## Deployment
 
 The production architecture is AWS: CloudFront serves the static build from

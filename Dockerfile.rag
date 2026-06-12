@@ -1,0 +1,16 @@
+# Python RAG retrieval sidecar.
+# Installs CPU-only PyTorch first so the image stays ~1.5 GB instead of the
+# multi-GB CUDA default. ChromaDB and the data directory mount as volumes.
+
+FROM python:3.11-slim
+WORKDIR /app
+
+COPY scripts/requirements.txt scripts/requirements.txt
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
+ && pip install --no-cache-dir -r scripts/requirements.txt
+
+COPY scripts/ scripts/
+
+ENV RAG_SERVER_HOST=0.0.0.0 RAG_SERVER_PORT=8001
+EXPOSE 8001
+CMD ["python", "scripts/rag_server.py"]

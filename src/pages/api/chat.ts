@@ -13,17 +13,23 @@ import Groq from 'groq-sdk';
 
 export const prerender = false;
 
-const RAG_SERVER_URL = import.meta.env.RAG_SERVER_URL ?? 'http://127.0.0.1:8001';
-const GROQ_API_KEY = import.meta.env.GROQ_API_KEY ?? '';
-const GROQ_MODEL = import.meta.env.GROQ_MODEL || 'llama-3.1-8b-instant';
-const OLLAMA_HOST = import.meta.env.OLLAMA_HOST ?? 'http://localhost:11434';
-const OLLAMA_MODEL = import.meta.env.OLLAMA_MODEL || 'llama3.1:latest';
+// Vite inlines import.meta.env at build time; process.env covers images
+// built without a .env (Docker) where config arrives at container runtime.
+function env(key: string): string {
+  return import.meta.env[key] ?? process.env[key] ?? '';
+}
+
+const RAG_SERVER_URL = env('RAG_SERVER_URL') || 'http://127.0.0.1:8001';
+const GROQ_API_KEY = env('GROQ_API_KEY');
+const GROQ_MODEL = env('GROQ_MODEL') || 'llama-3.1-8b-instant';
+const OLLAMA_HOST = env('OLLAMA_HOST') || 'http://localhost:11434';
+const OLLAMA_MODEL = env('OLLAMA_MODEL') || 'llama3.1:latest';
 
 const groq = GROQ_API_KEY ? new Groq({ apiKey: GROQ_API_KEY }) : null;
-const MIN_SIMILARITY = Number(import.meta.env.RAG_MIN_SIMILARITY ?? 0.32);
-const GITHUB_URL = import.meta.env.PUBLIC_GITHUB_URL ?? '';
-const LINKEDIN_URL = import.meta.env.PUBLIC_LINKEDIN_URL ?? '';
-const OWNER = import.meta.env.PUBLIC_TERMINAL_USER ?? 'the portfolio owner';
+const MIN_SIMILARITY = Number(env('RAG_MIN_SIMILARITY') || 0.32);
+const GITHUB_URL = env('PUBLIC_GITHUB_URL');
+const LINKEDIN_URL = env('PUBLIC_LINKEDIN_URL');
+const OWNER = env('PUBLIC_TERMINAL_USER') || 'the portfolio owner';
 
 const TOP_K = 5;
 const MAX_QUERY_LENGTH = 500;

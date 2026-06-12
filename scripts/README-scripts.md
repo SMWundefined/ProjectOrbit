@@ -78,22 +78,3 @@ A `chunk` is one unit of retrievable context: a single job, a single project,
 a single skill category, or a whole short section. Each chunk is stored with
 `{section, file, type, source}` metadata so the chat endpoint can cite and
 filter by origin.
-
-## rag_server.py — retrieval sidecar
-
-The Astro chat endpoint (`/api/chat`) cannot read ChromaDB's on-disk store
-from Node, so this localhost-only server does retrieval for it using the
-same embedding model as ingestion:
-
-```bash
-python scripts/rag_server.py
-# RAG server ready on http://127.0.0.1:8001 (28 chunks in 'portfolio')
-```
-
-| Endpoint  | Method | Body                       | Returns                                   |
-| --------- | ------ | -------------------------- | ----------------------------------------- |
-| `/health` | GET    | —                          | `{"status": "ok", "chunks": N}`           |
-| `/query`  | POST   | `{"query": "...", "k": 5}` | top-k chunks with cosine similarity score |
-
-It binds to `127.0.0.1` only and must be running (along with Ollama) for the
-terminal's AI chat to work. Port is configurable via `RAG_SERVER_PORT`.

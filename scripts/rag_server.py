@@ -39,6 +39,8 @@ load_dotenv(PROJECT_ROOT / ".env")
 CHROMA_PATH = os.getenv("CHROMA_PATH", "./chroma_db")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
 PORT = int(os.getenv("RAG_SERVER_PORT", "8001"))
+# 127.0.0.1 everywhere except containers, where Docker networking needs 0.0.0.0
+HOST = os.getenv("RAG_SERVER_HOST", "127.0.0.1")
 COLLECTION_NAME = "portfolio"
 MAX_K = 10
 
@@ -122,8 +124,8 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
-    server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
-    print(f"RAG server ready on http://127.0.0.1:{PORT} "
+    server = ThreadingHTTPServer((HOST, PORT), Handler)
+    print(f"RAG server ready on http://{HOST}:{PORT} "
           f"({COLLECTION.count()} chunks in '{COLLECTION_NAME}')")
     try:
         server.serve_forever()
