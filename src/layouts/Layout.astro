@@ -1,7 +1,9 @@
 ---
 import '../styles/global.css';
 
-const title = import.meta.env.PUBLIC_SITE_TITLE ?? 'Terminal Portfolio';
+// browser tab title; the terminal window bar keeps PUBLIC_SITE_TITLE
+const title =
+	import.meta.env.PUBLIC_TAB_TITLE ?? import.meta.env.PUBLIC_SITE_TITLE ?? 'Terminal Portfolio';
 ---
 
 <!doctype html>

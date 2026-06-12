@@ -103,8 +103,8 @@ export interface RetroContent {
 
 export const content: RetroContent = {
   identity: {
-    // TODO: your name and title
-    name: 'Alex Rivera',
+    // TODO: your title (name drives the retro site's browser tab title)
+    name: 'Wadood Sultan',
     title: 'Site Reliability Engineer',
     bio: [
       // TODO: 2-3 sentences, first person, warm not resume-speak
