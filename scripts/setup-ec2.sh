@@ -141,6 +141,7 @@ User=ubuntu
 WorkingDirectory=$APP_DIR
 Environment=HOST=0.0.0.0
 Environment=PORT=4321
+EnvironmentFile=-$APP_DIR/.env
 ExecStart=/usr/bin/node $APP_DIR/dist/server/entry.mjs
 Restart=always
 RestartSec=5
@@ -150,7 +151,9 @@ WantedBy=multi-user.target
 EOF
 
 sudo systemctl daemon-reload
-sudo systemctl enable --now orbit-rag.service orbit-web.service
+sudo systemctl enable orbit-rag.service orbit-web.service
+# restart (not just enable --now) so re-runs pick up new builds
+sudo systemctl restart orbit-rag.service orbit-web.service
 
 log "Done. Service status:"
 sudo systemctl --no-pager --lines 3 status orbit-rag.service orbit-web.service || true
