@@ -1,0 +1,65 @@
+# Deploys the static frontend on every push to main.
+# The EC2 server side (chat API + RAG sidecar) deploys separately via
+# scripts/setup-ec2.sh — see README.
+#
+# Required repository secrets (Settings -> Secrets and variables -> Actions):
+#   AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY  - deploy IAM user credentials
+#   S3_BUCKET_NAME                             - static site bucket
+#   CLOUDFRONT_DISTRIBUTION_ID                 - distribution to invalidate
+# Required repository variables (same page, Variables tab) — these are
+# baked into the public site, so they are vars, not secrets:
+#   PUBLIC_SITE_TITLE, PUBLIC_TERMINAL_USER, PUBLIC_TERMINAL_HOST,
+#   PUBLIC_GITHUB_URL, PUBLIC_LINKEDIN_URL, PUBLIC_CONTACT_EMAIL,
+#   PUBLIC_WEBSITE_URL
+
+name: Deploy frontend
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          PUBLIC_SITE_TITLE: ${{ vars.PUBLIC_SITE_TITLE }}
+          PUBLIC_TERMINAL_USER: ${{ vars.PUBLIC_TERMINAL_USER }}
+          PUBLIC_TERMINAL_HOST: ${{ vars.PUBLIC_TERMINAL_HOST }}
+          PUBLIC_GITHUB_URL: ${{ vars.PUBLIC_GITHUB_URL }}
+          PUBLIC_LINKEDIN_URL: ${{ vars.PUBLIC_LINKEDIN_URL }}
+          PUBLIC_CONTACT_EMAIL: ${{ vars.PUBLIC_CONTACT_EMAIL }}
+          PUBLIC_WEBSITE_URL: ${{ vars.PUBLIC_WEBSITE_URL }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Sync static build to S3
+        run: aws s3 sync dist/client "s3://${{ secrets.S3_BUCKET_NAME }}" --delete
+
+      - name: Invalidate CloudFront cache
+        run: >
+          aws cloudfront create-invalidation
+          --distribution-id "${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}"
+          --paths "/*"

@@ -137,10 +137,38 @@ scripts/README-scripts.md       pipeline details and expected output
 
 ## Deployment
 
-Coming soon: AWS deployment guide (S3 data sync, server hosting for the
-endpoint and sidecar, domain + TLS). The site builds with the Node adapter
-(`npm run build` → `node dist/server/entry.mjs`), so any box that can run
-Node, Python, and Ollama can serve it today.
+The production architecture is AWS: CloudFront serves the static build from
+a private S3 bucket (`dist/client/`), and `/api/*` routes to an EC2 instance
+running the Node server (`dist/server/entry.mjs`) plus the Python RAG
+sidecar as systemd services. Personal data lives in a private S3 bucket
+only the instance role can read. See `scripts/setup-ec2.sh` (server
+bootstrap) and `scripts/update-data.sh` (data refresh workflow).
+
+### CI/CD (GitHub Actions)
+
+Pushes to `main` trigger `.github/workflows/deploy.yml`: build → sync
+`dist/client/` to S3 → invalidate CloudFront.
+
+Configure in repo **Settings → Secrets and variables → Actions**:
+
+**Secrets** (sensitive):
+
+| Secret | Value |
+| --- | --- |
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | Credentials for a deploy IAM user with S3 write + CloudFront invalidation rights |
+| `S3_BUCKET_NAME` | The static site bucket name |
+| `CLOUDFRONT_DISTRIBUTION_ID` | The distribution in front of it |
+
+**Variables** (public — they're rendered into the site): the seven
+`PUBLIC_*` values from `.env.example` (`PUBLIC_SITE_TITLE`,
+`PUBLIC_TERMINAL_USER`, `PUBLIC_TERMINAL_HOST`, `PUBLIC_GITHUB_URL`,
+`PUBLIC_LINKEDIN_URL`, `PUBLIC_CONTACT_EMAIL`, `PUBLIC_WEBSITE_URL`).
+CI has no `.env` (it's gitignored), so without these the deployed site
+renders the anonymous `guest@orbit` fallback.
+
+Server-side changes (anything under `src/pages/api/` or `scripts/`) deploy
+by re-running `setup-ec2.sh` on the instance — it pulls `main`, rebuilds,
+and restarts the services.
 
 ## Contributing
 
