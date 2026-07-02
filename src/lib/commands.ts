@@ -46,15 +46,20 @@ function stripProtocol(url: string): string {
 }
 
 // Proficiency bars render in a 10-block scale, columns aligned by padEnd.
+// Real self-ratings from answers.txt Section 8.
 const SKILLS: ReadonlyArray<readonly [string, number]> = [
   ['Python', 90],
-  ['AWS / GCP', 85],
-  ['Kubernetes', 85],
-  ['Terraform', 80],
-  ['Docker', 85],
-  ['CI/CD', 80],
-  ['JavaScript', 70],
-  ['SQL', 75],
+  ['JavaScript', 80],
+  ['Shell/Bash', 90],
+  ['Ruby', 80],
+  ['AWS', 95],
+  ['Docker', 90],
+  ['Kubernetes', 90],
+  ['RAG/LLM', 75],
+  ['ML basics', 55],
+  ['Git/GitHub', 75],
+  ['Linux/WSL', 90],
+  ['CI/CD', 85],
 ];
 
 function skillBar(name: string, percent: number): string {

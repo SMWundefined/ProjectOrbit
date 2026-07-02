@@ -304,6 +304,15 @@ const sliceEnd = (currentIndex + 1) / sequence.length;
     transition: color 400ms ease;
   }
 
+  /* the red era's name for the remnant: gold-parchment on a mars glow */
+  .life-label.label-rr {
+    color: #f0e2c0;
+    border-color: rgba(193, 68, 14, 0.55);
+    letter-spacing: 0.3em;
+    text-shadow: 0 0 10px rgba(193, 68, 14, 0.9);
+    box-shadow: 0 0 16px rgba(193, 68, 14, 0.3);
+  }
+
   /* supernova: two shock rings, the outer one enormous */
   .life-star.nova::after {
     content: '';
@@ -571,6 +580,14 @@ const sliceEnd = (currentIndex + 1) / sequence.length;
 
     const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
 
+    // a page can rename the star while one of its acts holds the stage
+    // (contact's forum turns the remnant into RED RISING)
+    let labelOverride = '';
+    window.addEventListener('orbit:star-label', (e: Event) => {
+      labelOverride = (e as CustomEvent).detail?.label ?? '';
+      label!.classList.toggle('label-rr', labelOverride !== '');
+    });
+
     function styleStar(p: number, now: number): void {
       let lo = PHASES[0];
       let hi = PHASES[PHASES.length - 1];
@@ -598,11 +615,18 @@ const sliceEnd = (currentIndex + 1) / sequence.length;
       star!.style.width = `${size.toFixed(1)}px`;
       star!.style.height = `${size.toFixed(1)}px`;
       star!.style.transform = `translate(-50%, -50%) scale(${tremble.toFixed(3)})`;
-      star!.style.background = `rgba(${r},${g},${b},${a.toFixed(2)})`;
-      star!.style.filter = blur > 0.3 ? `blur(${blur.toFixed(1)}px)` : '';
-      star!.style.boxShadow = `0 0 ${(glow * shimmer).toFixed(1)}px rgba(${r},${g},${b},${(a * 0.8).toFixed(2)})`;
-      label!.textContent = t > 0.5 ? hi.label : lo.label;
-      label!.style.color = p >= 0.96 ? '#c9a227' : '';
+      if (labelOverride) {
+        // the red era: the remnant burns mars-red under its new name
+        star!.style.background = 'rgba(226, 92, 36, 1)';
+        star!.style.filter = '';
+        star!.style.boxShadow = `0 0 ${(26 * shimmer).toFixed(1)}px rgba(193, 68, 14, 0.85)`;
+      } else {
+        star!.style.background = `rgba(${r},${g},${b},${a.toFixed(2)})`;
+        star!.style.filter = blur > 0.3 ? `blur(${blur.toFixed(1)}px)` : '';
+        star!.style.boxShadow = `0 0 ${(glow * shimmer).toFixed(1)}px rgba(${r},${g},${b},${(a * 0.8).toFixed(2)})`;
+      }
+      label!.textContent = labelOverride || (t > 0.5 ? hi.label : lo.label);
+      label!.style.color = labelOverride ? '' : p >= 0.96 ? '#c9a227' : '';
     }
 
     const NOVA_AT = 0.97;
@@ -617,6 +641,10 @@ const sliceEnd = (currentIndex + 1) / sequence.length;
     let raf = 0;
 
     function targetP(): number {
+      // contact scrolls (the descent), but the star still lives its whole
+      // ending on arrival — the supernova is the doorway the rest of the
+      // page then falls through, not something scroll has to earn
+      if (active === 'contact') return sliceEnd;
       const scrollable = document.documentElement.scrollHeight - window.innerHeight;
       const local = scrollable > 20 ? Math.min(1, Math.max(0, window.scrollY / scrollable)) : 1;
       return sliceStart + local * (sliceEnd - sliceStart);
@@ -657,7 +685,7 @@ const sliceEnd = (currentIndex + 1) / sequence.length;
         );
         label!.textContent = 'SUPERNOVA';
         window.setTimeout(() => {
-          if (exploded) label!.textContent = 'NEUTRON STAR';
+          if (exploded && !labelOverride) label!.textContent = 'NEUTRON STAR';
         }, 1200);
       } else if (current < NOVA_AT && exploded) {
         exploded = false;

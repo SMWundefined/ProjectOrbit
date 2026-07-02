@@ -1,15 +1,24 @@
 ---
-// Contact — the last page. Each channel has its own character: email is
-// the direct line, GitHub speaks monospace, LinkedIn carries the formal
-// record. Threads shows recent posts (template data until the live feed
-// is wired); the blog is teased. The life star goes supernova here.
+// Contact — the last page, and the longest fall. It opens the way the
+// Society knows this site: green channels, hairlines, restraint. The
+// life star goes supernova as you arrive — and the page then falls
+// through the hole it leaves: one drifting transmission, then the
+// wormhole itself — rings of the Color spectrum, house names rushing
+// past — and out the other side into the red era, where the Forum
+// keeps the social banners. Per aspera ad astra.
 import PageTransition from '../../components/retro/PageTransition.astro';
 import { content } from '../../data/retro-content';
 
 const { contact, identity } = content;
+// email lives in .env (PUBLIC_CONTACT_EMAIL), not in source — same as Terminal.astro
+const email = import.meta.env.PUBLIC_CONTACT_EMAIL ?? '';
 const github = contact.socials.find((s) => s.icon === 'github');
 const linkedin = contact.socials.find((s) => s.icon === 'linkedin');
+const latestPost = contact.threads.posts[0];
 const year = new Date().getFullYear();
+
+// the Society brands with numerals — the Forum's rows carry them
+const numerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii'];
 ---
 
 <PageTransition
@@ -17,107 +26,266 @@ const year = new Date().getFullYear();
   active="contact"
   description={`${content.identity.name} — contact`}
 >
-  <div class="contact-shell flex h-dvh flex-col overflow-hidden px-8 sm:px-16 lg:px-28">
-    <section class="mx-auto w-full max-w-2xl pt-16 lg:pt-20">
-      <p class="page-kicker mb-4 text-xs uppercase">06 — the connection</p>
-      <h2 class="page-title mb-4">{contact.heading}</h2>
-      <p class="mb-8 max-w-md text-sm leading-relaxed sm:text-base" style="color: var(--retro-text-muted);">
-        {contact.note}
-      </p>
+  <div class="contact-shell">
+    <!-- the red tide: a fixed veil whose opacity is driven by scroll -->
+    <div class="mars-veil" aria-hidden="true"></div>
 
-      <!-- email: the direct line -->
-      <a href={`mailto:${contact.email}`} class="channel ch-mail">
-        <span class="channel-glyph" aria-hidden="true">
-          <span class="g-rest">@</span>
-          <span class="g-hover">✉</span>
-        </span>
-        <span class="channel-body">
-          <span class="channel-label">{contact.email}</span>
-          <span class="channel-sub">direct line</span>
-        </span>
-        <span class="channel-arrow" aria-hidden="true">↗</span>
-      </a>
+    <!-- ================= act i: the connection ================= -->
+    <section class="panel connect px-8 sm:px-16 lg:px-28">
+      <div class="mx-auto w-full max-w-2xl pt-16 pb-20 lg:pt-20">
+        <p class="page-kicker mb-4 text-xs uppercase">06 — the connection</p>
+        <h2 class="page-title mb-4">{contact.heading}</h2>
+        <p class="mb-6 max-w-md text-sm leading-relaxed sm:text-base" style="color: var(--retro-text-muted);">
+          {contact.note}
+        </p>
 
-      {
-        github && (
-          <a href={github.url} target="_blank" rel="noopener" class="channel ch-code">
-            <span class="channel-glyph" aria-hidden="true">
-              {'</>'}
-            </span>
-            <span class="channel-body">
-              <span class="channel-label">
-                {github.label}
-                <span class="caret" aria-hidden="true">
-                  ▍
-                </span>
+        <!-- email: the direct line (the address stays out of the markup) -->
+        <a href={`mailto:${email}`} class="channel ch-mail">
+          <span class="channel-glyph" aria-hidden="true">
+            <span class="g-rest">@</span>
+            <span class="g-hover">✉</span>
+          </span>
+          <span class="channel-body">
+            <span class="channel-label">Email Me</span>
+            <span class="channel-sub">direct line</span>
+          </span>
+          <span class="channel-arrow" aria-hidden="true">↗</span>
+        </a>
+
+        <!-- resume: the dossier — hover and it opens for inspection -->
+        <a href="/resume.pdf" download class="channel ch-dossier" aria-label="Download resume (PDF)">
+          <span class="channel-glyph" aria-hidden="true">pdf</span>
+          <span class="channel-body">
+            <span class="channel-label">Resume</span>
+            <span class="channel-sub">the dossier</span>
+          </span>
+          <span class="channel-arrow" aria-hidden="true">↓</span>
+          <!-- resume-preview.webp is page 1 of resume.pdf, pre-rendered;
+               regenerate it whenever the pdf changes -->
+          <span class="dossier-preview" aria-hidden="true">
+            <img src="/resume-preview.webp" alt="" loading="lazy" decoding="async" />
+          </span>
+        </a>
+
+        {
+          github && (
+            <a href={github.url} target="_blank" rel="noopener" class="channel ch-code">
+              <span class="channel-glyph" aria-hidden="true">
+                {'</>'}
               </span>
-              <span class="channel-sub">the source</span>
-            </span>
-            <span class="channel-arrow" aria-hidden="true">↗</span>
-          </a>
-        )
-      }
+              <span class="channel-body">
+                <span class="channel-label">
+                  {github.label}
+                  <span class="caret" aria-hidden="true">
+                    ▍
+                  </span>
+                </span>
+                <span class="channel-sub">the source</span>
+              </span>
+              <span class="channel-arrow" aria-hidden="true">↗</span>
+            </a>
+          )
+        }
 
-      {
-        linkedin && (
-          <a href={linkedin.url} target="_blank" rel="noopener" class="channel ch-record">
-            <span class="channel-glyph" aria-hidden="true">in</span>
-            <span class="channel-body">
-              <span class="channel-label">{linkedin.label}</span>
-              <span class="channel-sub">the record</span>
-            </span>
-            <span class="seal" aria-hidden="true"></span>
-            <span class="channel-arrow" aria-hidden="true">↗</span>
-          </a>
-        )
-      }
+        {
+          linkedin && (
+            <a href={linkedin.url} target="_blank" rel="noopener" class="channel ch-record">
+              <span class="channel-glyph" aria-hidden="true">in</span>
+              <span class="channel-body">
+                <span class="channel-label">{linkedin.label}</span>
+                <span class="channel-sub">the record</span>
+              </span>
+              <span class="seal" aria-hidden="true"></span>
+              <span class="channel-arrow" aria-hidden="true">↗</span>
+            </a>
+          )
+        }
 
-      <!-- the terminal: the other face of this site -->
-      <a href="/" class="channel ch-term">
-        <span class="channel-glyph" aria-hidden="true">&gt;_</span>
-        <span class="channel-body">
-          <span class="channel-label">The Terminal</span>
-          <span class="channel-sub">wsl mode</span>
-        </span>
-        <span class="channel-arrow" aria-hidden="true">↗</span>
-      </a>
-
-      <!-- the blog tease -->
-      <div class="channel ch-blog" aria-disabled="true">
-        <span class="channel-glyph" aria-hidden="true">✦</span>
-        <span class="channel-body">
-          <span class="channel-label">{contact.blog.label}</span>
-          <span class="channel-sub blog-note">{contact.blog.note}</span>
-        </span>
+        <!-- the terminal: the other face of this site -->
+        <a href="/" class="channel ch-term">
+          <span class="channel-glyph" aria-hidden="true">&gt;_</span>
+          <span class="channel-body">
+            <span class="channel-label">The Terminal</span>
+            <span class="channel-sub">wsl mode</span>
+          </span>
+          <span class="channel-arrow" aria-hidden="true">↗</span>
+        </a>
       </div>
 
-      <!-- threads: recent transmissions -->
-      <div class="threads mt-8">
-        <div class="threads-head">
-          <a href={contact.threads.url} target="_blank" rel="noopener" class="threads-link">Threads</a>
-          <span class="threads-sync">live feed syncing soon</span>
-        </div>
-        <div class="threads-grid">
-          {
-            contact.threads.posts.map((post) => (
-              <article class="thread-card">
-                <p class="thread-text">{post.text}</p>
-                <p class="thread-date">{post.date}</p>
-              </article>
-            ))
-          }
-        </div>
+      <!-- the way down: something waits beneath the last hairline -->
+      <a href="#the-descent" class="descent-cue" aria-label="Continue — the descent">
+        <span class="cue-text">the descent</span>
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path d="M4 7l6 6 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+        </svg>
+      </a>
+    </section>
+
+    <!-- ================= fall i: the signal drifts ================= -->
+    <section id="the-descent" class="panel descent d1 px-8 sm:px-16">
+      <div class="d-inner rr-reveal">
+        <p class="d-kicker">transmission drift</p>
+        <p class="d-motto">per aspera ad astra</p>
+        <p class="d-sub">through hardships, to the stars — but out here, the stars are turning red.</p>
       </div>
     </section>
 
-    <footer class="footer-line mx-auto mt-auto flex w-full max-w-2xl items-center justify-between pt-6 pb-5">
-      <span>© {year} {identity.name}</span>
-      <span class="footer-mono">transmission channels open</span>
-    </footer>
+    <!-- ================= fall ii: the wormhole ================= -->
+    <!-- Rings of the Color spectrum stream past continuously — alive, not
+         one-shot — while quiet fragments drift by. The tunnel leans with
+         the pointer; everything fades at the seams so nothing ever cuts. -->
+    <section class="panel warp" aria-hidden="true">
+      <div class="warp-stage">
+        <div class="warp-core"></div>
+        <span class="warp-ring" data-i="0" style="--rc: rgba(3, 122, 104, 0.75); --rg: rgba(3, 122, 104, 0.3);"></span>
+        <span class="warp-ring" data-i="1" style="--rc: rgba(200, 205, 215, 0.6); --rg: rgba(200, 205, 215, 0.22);"></span>
+        <span class="warp-ring" data-i="2" style="--rc: rgba(201, 162, 39, 0.85); --rg: rgba(201, 162, 39, 0.3);"></span>
+        <span class="warp-ring" data-i="3" style="--rc: rgba(217, 140, 166, 0.7); --rg: rgba(217, 140, 166, 0.25);"></span>
+        <span class="warp-ring" data-i="4" style="--rc: rgba(94, 74, 122, 0.85); --rg: rgba(74, 59, 92, 0.35);"></span>
+        <span class="warp-ring" data-i="5" style="--rc: rgba(193, 68, 14, 0.9); --rg: rgba(193, 68, 14, 0.35);"></span>
+        <span class="warp-word" data-c="0.3" style="--nx: -26vw; --ny: -14vh; color: #c8cdd7;">the void bends</span>
+        <span class="warp-word" data-c="0.45" style="--nx: 28vw; --ny: -12vh; color: #d98ca6;">colors bloom in the dark</span>
+        <span class="warp-word" data-c="0.58" style="--nx: -24vw; --ny: 16vh; color: #e8b04b;">gravity sings</span>
+        <span class="warp-word" data-c="0.74" style="--nx: 22vw; --ny: 18vh; color: #ff5e2e;">a red world rises</span>
+      </div>
+    </section>
+
+    <!-- ================= act ii: the forum ================= -->
+    <section class="panel forum px-8 sm:px-16 lg:px-28">
+      <div class="mars-limb" aria-hidden="true"></div>
+      <div class="forum-inner rr-reveal mx-auto w-full max-w-2xl">
+        <p class="page-kicker rr-kicker mb-4 text-xs uppercase">07 — the forum</p>
+        <h2 class="forum-title mb-4">The Forum</h2>
+        <p class="forum-note mb-8">
+          <em>omnis vir lupus</em> — every man a wolf. the social transmissions of the red era.
+        </p>
+
+        <!-- the banners: no boxes, only hairlines and house oaths -->
+        <a href={contact.threads.url} target="_blank" rel="noopener" class="frow">
+          <span class="frow-num" aria-hidden="true">{numerals[0]}</span>
+          <span class="frow-body">
+            <span class="frow-name">Threads</span>
+            <span class="frow-house">house mercury — the messenger</span>
+            <!-- #threads-feed: the live API feed mounts here later -->
+            <span class="frow-echo" id="threads-feed">
+              {
+                latestPost ? (
+                  <>
+                    “{latestPost.text}” <span class="frow-date">· {latestPost.date}</span>
+                  </>
+                ) : (
+                  'awaiting transmission…'
+                )
+              }
+            </span>
+            <span class="frow-tag">live feed syncing soon</span>
+          </span>
+          <span class="frow-meta">{contact.threads.handle}</span>
+          <span class="frow-arrow" aria-hidden="true">↗</span>
+        </a>
+
+        <div class="frow frow-still">
+          <span class="frow-num" aria-hidden="true">{numerals[1]}</span>
+          <span class="frow-body">
+            <span class="frow-name">{contact.blog.label}</span>
+            <span class="frow-house">house apollo — the muse</span>
+            <span class="frow-echo">the first howl is being written…</span>
+          </span>
+          <span class="frow-meta">{contact.blog.note}</span>
+        </div>
+
+        {
+          contact.outposts.map((o, idx) => {
+            const inner = (
+              <>
+                <span class="frow-num" aria-hidden="true">
+                  {numerals[idx + 2]}
+                </span>
+                <span class="frow-body">
+                  <span class="frow-name">{o.label}</span>
+                  <span class="frow-house">{o.house}</span>
+                </span>
+                <span class="frow-meta">{o.sub}</span>
+                {o.url && (
+                  <span class="frow-arrow" aria-hidden="true">
+                    ↗
+                  </span>
+                )}
+              </>
+            );
+            return o.url ? (
+              <a href={o.url} target="_blank" rel="noopener" class="frow">
+                {inner}
+              </a>
+            ) : (
+              <div class="frow frow-still">{inner}</div>
+            );
+          })
+        }
+
+        <footer class="footer-line flex items-center justify-between">
+          <span>© {year} {identity.name}</span>
+          <span class="footer-mono">the howl carries · transmission channels open</span>
+        </footer>
+      </div>
+    </section>
   </div>
 </PageTransition>
 
+<style is:global>
+  /* the dossier preview floats beside its row — never let it spawn a bar */
+  html {
+    overflow-x: clip;
+  }
+</style>
+
 <style>
+  /* ---- the acts ------------------------------------------------------------ */
+
+  .contact-shell {
+    /* --descent: 0 in the green, 1 on the forum floor (set by scroll) */
+    --rr-red: #c1440e;
+    --rr-gold: #c9a227;
+    --rr-parchment: #e8d9b5;
+    --rr-serif: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+  }
+
+  .panel {
+    position: relative;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .connect {
+    justify-content: flex-start;
+  }
+
+  /* the red tide rises beneath the content as you fall */
+  .mars-veil {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: var(--descent, 0);
+    background:
+      radial-gradient(120% 85% at 50% 118%, rgba(193, 68, 14, 0.34), transparent 62%),
+      linear-gradient(180deg, rgba(0, 0, 0, 0) 25%, rgba(90, 18, 8, 0.5) 100%);
+    transition: opacity 120ms linear;
+  }
+
+  .d1 {
+    background: linear-gradient(180deg, transparent, rgba(90, 18, 8, 0.14));
+  }
+  .warp {
+    background: linear-gradient(180deg, rgba(90, 18, 8, 0.14), rgba(24, 12, 26, 0.55) 45%, rgba(26, 6, 3, 0.7));
+  }
+  .forum {
+    background: linear-gradient(180deg, rgba(26, 6, 3, 0.7), rgba(12, 3, 2, 0.9));
+  }
+
   .page-kicker {
     display: flex;
     align-items: center;
@@ -140,18 +308,18 @@ const year = new Date().getFullYear();
   /* ---- channels ----------------------------------------------------------- */
 
   .channel {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 1.3rem;
-    padding: 0.78rem 0;
+    padding: 0.64rem 0;
     border-top: 1px solid rgba(255, 255, 255, 0.06);
     text-decoration: none;
     color: var(--retro-text);
   }
 
-  .ch-blog {
+  .ch-term {
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    cursor: default;
   }
 
   .channel-glyph {
@@ -171,6 +339,8 @@ const year = new Date().getFullYear();
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+    /* let long labels shrink instead of shoving the arrow offscreen */
+    min-width: 0;
   }
 
   .channel-label {
@@ -181,10 +351,6 @@ const year = new Date().getFullYear();
     transition:
       letter-spacing 450ms var(--retro-ease),
       font-family 0s;
-  }
-
-  .ch-mail .channel-label {
-    font-size: clamp(1.1rem, 3vw, 1.4rem);
   }
 
   .channel-sub {
@@ -229,6 +395,54 @@ const year = new Date().getFullYear();
   }
   .ch-mail:hover .channel-arrow {
     transform: translate(7px, -6px);
+  }
+
+  /* resume: the arrow drops — the dossier lands in your hands */
+  .ch-dossier:hover .channel-arrow {
+    transform: translateY(5px);
+    color: #c9a227;
+  }
+
+  /* the dossier preview: hover the row and the pdf opens for inspection */
+  .dossier-preview {
+    display: none;
+  }
+
+  @media (min-width: 1280px) and (hover: hover) {
+    .dossier-preview {
+      display: block;
+      position: absolute;
+      left: calc(100% + 1.5rem);
+      top: 50%;
+      width: 240px;
+      aspect-ratio: 17 / 22;
+      transform: translateY(-50%) scale(0.96);
+      opacity: 0;
+      pointer-events: none;
+      border: 1px solid rgba(201, 162, 39, 0.4);
+      border-radius: 4px;
+      overflow: hidden;
+      background: #0d0d0d;
+      box-shadow:
+        0 18px 50px rgba(0, 0, 0, 0.6),
+        0 0 24px rgba(3, 122, 104, 0.15);
+      transition:
+        opacity 300ms var(--retro-ease),
+        transform 300ms var(--retro-ease);
+      z-index: 5;
+    }
+
+    .ch-dossier:hover .dossier-preview {
+      opacity: 1;
+      transform: translateY(-50%) scale(1);
+    }
+
+    .dossier-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top;
+    }
   }
 
   /* github: it speaks monospace, caret blinking */
@@ -281,27 +495,251 @@ const year = new Date().getFullYear();
     color: #3ddc84;
   }
 
-  /* blog: gold whisper at rest — but hover, and it bleeds Mars red.
-     Red Rising gets its own palette, only while you're touching it. */
-  .ch-blog .channel-glyph {
-    color: #c9a227;
-    transition:
-      color var(--retro-dur-fast) ease,
-      text-shadow var(--retro-dur) ease;
-  }
-  .blog-note {
-    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
-    color: rgba(201, 162, 39, 0.75);
+  /* the way down */
+  .descent-cue {
+    position: absolute;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--retro-gray);
+    text-decoration: none;
+    animation: retro-drift-down 2.4s var(--retro-ease) infinite;
     transition: color var(--retro-dur-fast) ease;
   }
 
-  .ch-blog:hover .channel-glyph {
-    color: #c1440e;
-    text-shadow: 0 0 14px rgba(193, 68, 14, 0.8);
+  .descent-cue:hover {
+    color: var(--rr-red);
   }
 
-  .ch-blog:hover .channel-label {
-    background: linear-gradient(110deg, #c1440e 20%, #e8b04b 40%, #ff5e2e 60%, #c1440e 80%);
+  .cue-text {
+    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+    font-size: 0.56rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+  }
+
+  /* ---- fall i: the drift ---------------------------------------------------- */
+
+  .d-inner {
+    max-width: 46rem;
+    margin-inline: auto;
+    width: 100%;
+    text-align: center;
+  }
+
+  .d-kicker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9rem;
+    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: rgba(201, 162, 39, 0.8);
+    margin-bottom: 1.4rem;
+  }
+
+  .d-kicker::before,
+  .d-kicker::after {
+    content: '';
+    width: 26px;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(193, 68, 14, 0.9), rgba(201, 162, 39, 0.7));
+  }
+
+  .d-motto {
+    font-family: var(--rr-serif);
+    font-style: italic;
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    color: var(--rr-parchment);
+    text-shadow: 0 0 30px rgba(193, 68, 14, 0.35);
+  }
+
+  .d-sub {
+    margin: 1.2rem auto 0;
+    max-width: 32rem;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: rgba(232, 217, 181, 0.55);
+  }
+
+  /* ---- fall ii: the wormhole ------------------------------------------------ */
+
+  /* the rings bleed vertically into the acts above and below, pulling both
+     toward the passage — their opacity fades at the seams instead, so
+     nothing is ever cut mid-flight. Only the sides are clipped (they'd be
+     offscreen anyway, and would otherwise widen the document). */
+  .warp {
+    overflow-y: visible;
+    overflow-x: clip;
+  }
+
+  /* the stage leans with the pointer — you steer through the tunnel */
+  .warp-stage {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  /* the vanishing point: a mouth of light that swallows the scroll */
+  .warp-core {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 30vmin;
+    height: 22vmin;
+    transform: translate(-50%, -50%) scale(0.4);
+    border-radius: 50%;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(240, 226, 192, 0.3) 0%,
+      rgba(193, 68, 14, 0.26) 40%,
+      transparent 72%
+    );
+    filter: blur(6px);
+    opacity: 0.4;
+    will-change: transform, opacity;
+  }
+
+  /* rings of the Color spectrum — scale and opacity are set per-frame by JS */
+  .warp-ring {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 130vmax;
+    height: 82vmax;
+    margin: -41vmax 0 0 -65vmax;
+    border-radius: 50%;
+    border: 1.5px solid var(--rc);
+    box-shadow:
+      0 0 34px var(--rg),
+      inset 0 0 60px var(--rg);
+    opacity: 0;
+    filter: blur(0.5px);
+    will-change: transform, opacity;
+  }
+
+  /* quiet fragments drifting past on the way through */
+  .warp-word {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    font-family: var(--rr-serif);
+    font-style: italic;
+    font-size: clamp(0.9rem, 1.6vw, 1.25rem);
+    letter-spacing: 0.2em;
+    white-space: nowrap;
+    opacity: 0;
+    will-change: transform, opacity;
+    text-shadow: 0 0 18px currentColor;
+  }
+
+  /* ---- act ii: the forum ------------------------------------------------------ */
+
+  /* mars underfoot: you landed */
+  .mars-limb {
+    position: absolute;
+    left: 50%;
+    bottom: -52vh;
+    transform: translateX(-50%);
+    width: 160vw;
+    height: 62vh;
+    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+    background: radial-gradient(ellipse at 50% -10%, #6e2210 0%, #3a1006 50%, #160502 100%);
+    box-shadow: 0 -30px 110px rgba(193, 68, 14, 0.3);
+    pointer-events: none;
+  }
+
+  .forum-inner {
+    position: relative;
+    z-index: 1;
+  }
+
+  .rr-kicker {
+    color: rgba(201, 162, 39, 0.9);
+  }
+
+  .rr-kicker::before {
+    background: linear-gradient(90deg, rgba(193, 68, 14, 0.9), rgba(201, 162, 39, 0.8));
+  }
+
+  .forum-title {
+    font-family: var(--rr-serif);
+    font-size: clamp(2.2rem, 5.5vw, 3.6rem);
+    background: linear-gradient(110deg, #e8b04b 10%, #f0e2c0 45%, #c1440e 95%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .forum-note {
+    max-width: 32rem;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: rgba(232, 217, 181, 0.5);
+  }
+
+  .forum-note em {
+    font-family: var(--rr-serif);
+    color: rgba(232, 217, 181, 0.75);
+  }
+
+  /* ---- the banners: hairlines, numerals, house oaths — no boxes -------------- */
+
+  .frow {
+    display: flex;
+    align-items: baseline;
+    gap: 1.3rem;
+    padding: 1rem 0;
+    border-top: 1px solid rgba(201, 162, 39, 0.16);
+    text-decoration: none;
+  }
+
+  .frow:last-of-type {
+    border-bottom: 1px solid rgba(201, 162, 39, 0.16);
+  }
+
+  .frow-still {
+    cursor: default;
+  }
+
+  .frow-num {
+    flex: 0 0 2.6rem;
+    font-family: var(--rr-serif);
+    font-style: italic;
+    font-size: 0.95rem;
+    color: rgba(201, 162, 39, 0.55);
+    transition: color var(--retro-dur-fast) ease;
+  }
+
+  a.frow:hover .frow-num {
+    color: var(--rr-red);
+  }
+
+  .frow-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+    /* claim the middle so numeral/name never wrap apart */
+    flex: 1 1 0;
+  }
+
+  .frow-name {
+    font-family: var(--rr-serif);
+    font-size: 1.35rem;
+    color: #f0e2c0;
+    transition: letter-spacing 450ms var(--retro-ease);
+  }
+
+  a.frow:hover .frow-name {
+    background: linear-gradient(110deg, #c1440e 20%, #e8b04b 40%, #f0e2c0 60%, #c1440e 80%);
     background-size: 220% 100%;
     -webkit-background-clip: text;
     background-clip: text;
@@ -309,8 +747,69 @@ const year = new Date().getFullYear();
     animation: rr-shine 1.8s linear infinite;
   }
 
-  .ch-blog:hover .blog-note {
-    color: rgba(255, 94, 46, 0.85);
+  .frow-house {
+    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: rgba(193, 68, 14, 0.85);
+    transition: letter-spacing 450ms var(--retro-ease);
+  }
+
+  a.frow:hover .frow-house {
+    letter-spacing: 0.3em;
+  }
+
+  .frow-echo {
+    margin-top: 0.45rem;
+    font-family: var(--rr-serif);
+    font-style: italic;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: rgba(232, 217, 181, 0.55);
+    /* the banner keeps its line — long echoes get two of them */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .frow-date {
+    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+    font-style: normal;
+    font-size: 0.6rem;
+    letter-spacing: 0.16em;
+    color: rgba(232, 217, 181, 0.35);
+  }
+
+  .frow-tag {
+    margin-top: 0.35rem;
+    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: rgba(201, 162, 39, 0.5);
+  }
+
+  .frow-meta {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    color: rgba(201, 162, 39, 0.7);
+  }
+
+  .frow-arrow {
+    color: rgba(232, 217, 181, 0.35);
+    transition:
+      transform 450ms var(--retro-ease),
+      color 450ms ease;
+  }
+
+  a.frow:hover .frow-arrow {
+    color: #c9a227;
+    transform: translate(6px, -5px);
   }
 
   @keyframes rr-shine {
@@ -322,85 +821,51 @@ const year = new Date().getFullYear();
     }
   }
 
-  /* ---- threads ---------------------------------------------------------------- */
-
-  .threads-head {
-    display: flex;
-    align-items: baseline;
-    gap: 1.2rem;
-    margin-bottom: 1.1rem;
-  }
-
-  .threads-link {
-    font-family: var(--retro-font-display);
-    font-size: 1.05rem;
-    letter-spacing: var(--retro-tracking-wide);
-    color: var(--retro-text);
-    text-decoration: none;
-    border-bottom: 1px solid rgba(3, 122, 104, 0.5);
-    padding-bottom: 2px;
-    transition: border-color var(--retro-dur-fast) ease;
-  }
-
-  .threads-link:hover {
-    border-color: #c9a227;
-  }
-
-  .threads-sync {
-    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
-    font-size: 0.58rem;
-    letter-spacing: 0.22em;
-    color: var(--retro-gray);
-    text-transform: uppercase;
-  }
-
-  .threads-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 0.9rem;
-  }
-
-  @media (min-width: 640px) {
-    .threads-grid {
-      grid-template-columns: 1fr 1fr;
+  @media (max-width: 640px) {
+    .frow {
+      flex-wrap: wrap;
+    }
+    .frow-meta {
+      margin-left: 3.9rem;
+      order: 4;
+      flex-basis: 100%;
     }
   }
 
-  .thread-card {
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 10px;
-    padding: 1.1rem 1.2rem;
-    background: rgba(255, 255, 255, 0.015);
+  /* ---- reveal + footer ------------------------------------------------------ */
+
+  .rr-reveal {
+    opacity: 0;
+    transform: translateY(26px);
     transition:
-      border-color var(--retro-dur) ease,
-      box-shadow var(--retro-dur) ease;
+      opacity 900ms var(--retro-ease),
+      transform 900ms var(--retro-ease);
   }
 
-  .thread-card:hover {
-    border-color: rgba(3, 122, 104, 0.4);
-    box-shadow: var(--retro-glow-soft);
+  .rr-reveal.lit {
+    opacity: 1;
+    transform: none;
   }
 
-  .thread-text {
-    font-size: 0.85rem;
-    line-height: 1.6;
-    color: var(--retro-text-muted);
-    margin-bottom: 0.7rem;
+  @media (prefers-reduced-motion: reduce) {
+    .rr-reveal {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+    .descent-cue {
+      animation: none;
+    }
+    a.frow:hover .frow-name {
+      animation: none;
+    }
   }
-
-  .thread-date {
-    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
-    font-size: 0.6rem;
-    letter-spacing: 0.2em;
-    color: var(--retro-gray);
-  }
-
-  /* ---- footer ------------------------------------------------------------------- */
 
   .footer-line {
+    margin-top: 3.5rem;
     font-size: 0.68rem;
     letter-spacing: 0.14em;
-    color: var(--retro-gray);
+    color: rgba(232, 217, 181, 0.45);
   }
 
   .footer-mono {
@@ -408,13 +873,138 @@ const year = new Date().getFullYear();
     font-size: 0.6rem;
     letter-spacing: 0.22em;
   }
-
-  /* small screens get to scroll — clipping content there would be worse */
-  @media (max-width: 640px) {
-    .contact-shell {
-      height: auto;
-      min-height: 100dvh;
-      overflow: visible;
-    }
-  }
 </style>
+
+<script>
+  // ---- the descent: one living rAF drives veil, tunnel, and words -----------
+  const shell = document.querySelector<HTMLElement>('.contact-shell');
+  const warp = document.querySelector<HTMLElement>('.warp');
+  const stage = document.querySelector<HTMLElement>('.warp-stage');
+  const core = document.querySelector<HTMLElement>('.warp-core');
+  const rings = Array.from(document.querySelectorAll<HTMLElement>('.warp-ring'));
+  const words = Array.from(document.querySelectorAll<HTMLElement>('.warp-word'));
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const clamp01 = (v: number): number => Math.min(1, Math.max(0, v));
+
+  // the tunnel leans toward the pointer — you steer the passage
+  let tx = 0;
+  let ty = 0;
+  let px = 0;
+  let py = 0;
+  if (!reduced) {
+    window.addEventListener(
+      'pointermove',
+      (e: PointerEvent) => {
+        tx = (e.clientX / window.innerWidth - 0.5) * 36;
+        ty = (e.clientY / window.innerHeight - 0.5) * 26;
+      },
+      { passive: true }
+    );
+  }
+
+  let raf = 0;
+
+  function frame(now: number): void {
+    // the red tide: global scroll progress
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    const p = max > 0 ? window.scrollY / max : 0;
+    shell?.style.setProperty('--descent', clamp01((p - 0.08) / 0.72).toFixed(3));
+
+    if (warp && stage && core) {
+      const r = warp.getBoundingClientRect();
+      const vh = window.innerHeight;
+      // t: 0 = panel below the fold, 0.5 = filling the screen, 1 = passed
+      const t = clamp01((vh - r.top) / (vh + r.height));
+      // cov: how fully the panel owns the viewport — rings fade at the
+      // seams instead of being cut by a panel edge
+      const topGap = Math.max(r.top, 0);
+      const botGap = Math.max(vh - r.bottom, 0);
+      const cov = clamp01(1 - (topGap + botGap) / (vh * 0.9));
+      const nearby = r.bottom > -vh && r.top < vh * 2;
+
+      if (nearby) {
+        px += (tx - px) * 0.05;
+        py += (ty - py) * 0.05;
+        stage.style.transform = `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px)`;
+
+        // the tunnel streams continuously; scroll adds thrust
+        const flow = reduced ? 0.35 : now * 0.00006 + t * 1.05;
+
+        for (const ring of rings) {
+          const i = Number(ring.dataset.i ?? 0);
+          const rp = (((flow + i / rings.length) % 1) + 1) % 1;
+          const scale = 0.05 + Math.pow(rp, 2.1) * 2.3;
+          ring.style.transform = `scale(${scale.toFixed(3)})`;
+          ring.style.opacity = (Math.sin(Math.PI * rp) * 0.85 * cov).toFixed(3);
+        }
+
+        // fragments surface in their own band of the fall, drift out, let go
+        for (const w of words) {
+          const c = parseFloat(w.dataset.c ?? '0.5');
+          const wp = clamp01(1 - Math.abs(t - c) / 0.16);
+          const drift = (t - c) * 2.2;
+          const s = 0.9 + wp * 0.25 + Math.max(0, drift);
+          const d = (0.4 + drift).toFixed(3);
+          w.style.transform = `translate(-50%, -50%) translate(calc(var(--nx) * ${d}), calc(var(--ny) * ${d})) scale(${s.toFixed(3)})`;
+          w.style.opacity = (Math.pow(wp, 1.4) * 0.95 * cov).toFixed(3);
+        }
+
+        // the mouth of the new world: nearer, brighter, breathing
+        const pulse = reduced ? 0 : 0.05 * Math.sin(now / 700);
+        core.style.transform = `translate(-50%, -50%) scale(${(0.4 + t * 1.7 + pulse).toFixed(3)})`;
+        core.style.opacity = (0.25 + t * 0.75).toFixed(3);
+      }
+    }
+
+    raf = requestAnimationFrame(frame);
+  }
+
+  raf = requestAnimationFrame(frame);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      cancelAnimationFrame(raf);
+      raf = 0;
+    } else if (!raf) {
+      raf = requestAnimationFrame(frame);
+    }
+  });
+
+  // ---- the forum renames the star: the remnant becomes RED RISING -----------
+  const forum = document.querySelector('.forum');
+  if (forum) {
+    const forumIo = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          window.dispatchEvent(
+            new CustomEvent('orbit:star-label', {
+              detail: { label: e.isIntersecting ? 'RED RISING' : '' },
+            })
+          );
+        }
+      },
+      { threshold: 0.45 }
+    );
+    forumIo.observe(forum);
+  }
+
+  // ---- reveals: each act lights as it enters --------------------------------
+  const reveals = document.querySelectorAll('.rr-reveal');
+
+  if (reduced) {
+    reveals.forEach((el) => el.classList.add('lit'));
+  } else {
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            e.target.classList.add('lit');
+            io.unobserve(e.target);
+          }
+        }
+      },
+      { threshold: 0.35 }
+    );
+    reveals.forEach((el) => io.observe(el));
+  }
+</script>

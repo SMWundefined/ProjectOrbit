@@ -1,6 +1,6 @@
-// Content for the /retro static portfolio. Fill in your real details —
-// every entry below is a placeholder marked with TODO. The page templates
-// never hardcode content; they all read from this object.
+// Content for the /retro static portfolio, populated from answers.txt. A few
+// fields remain TODO where answers.txt didn't provide the data (see comments).
+// The page templates never hardcode content; they all read from this object.
 
 export interface TimelineEntry {
   /** Degree or program name */
@@ -71,8 +71,6 @@ export interface RetroContent {
     title: string;
     /** each string renders as one paragraph */
     bio: string[];
-    /** optional path under public/, e.g. "/profile.jpg" */
-    photo?: string;
     /** cockpit status line, bottom of the hero — keep it short and SRE-flavored */
     status: string;
   };
@@ -86,11 +84,13 @@ export interface RetroContent {
   contact: {
     heading: string;
     note: string;
-    email: string;
+    /** email is sourced from import.meta.env.PUBLIC_CONTACT_EMAIL, not stored here */
     socials: SocialLink[];
     /** recent Threads posts — template data until the live feed is wired */
     threads: {
       url: string;
+      /** e.g. "@wadoodphotos" — shown on the Forum placard */
+      handle: string;
       posts: ThreadPost[];
     };
     /** the blog teaser line */
@@ -98,166 +98,195 @@ export interface RetroContent {
       label: string;
       note: string;
     };
+    /** the Forum's smaller banners — each sworn to a house; url optional until live */
+    outposts: { label: string; sub: string; house: string; url?: string }[];
   };
 }
 
 export const content: RetroContent = {
   identity: {
-    // TODO: your title (name drives the retro site's browser tab title)
+    // name drives the retro site's browser tab title
     name: 'Wadood Sultan',
-    title: 'Site Reliability Engineer',
+    title: 'Senior Site Reliability Engineer',
     bio: [
-      // TODO: 2-3 sentences, first person, warm not resume-speak
       'I build platforms that make complex systems boring and predictable.',
       'Currently keeping mission-critical infrastructure honest at scale, with a soft spot for Kubernetes, clean automation, and teaching what I learn.',
+      'An engineer driven by the oxymoron of minimalist complexity — and I believe the potential of the future is AI.',
     ],
-    // TODO: drop a photo in public/ and set the path, or remove
-    photo: undefined,
-    // TODO: your own telemetry one-liner
+    // TODO: telemetry one-liner not provided in answers.txt — placeholder below
     status: 'ALL SYSTEMS NOMINAL · SLO 99.99 · us-east-1',
   },
 
   highlights: [
-    // TODO: your three signature numbers/facts
-    { value: '8+ yrs', label: 'Reliability engineering', detail: 'Keeping mission-critical systems honest' },
-    { value: 'CKA', label: 'Kubernetes certified', detail: 'And leading cross-team container initiatives' },
-    { value: 'Ph.D.', label: 'In progress', detail: 'AI and information infrastructure' },
+    // NOTE: answers.txt Section 10 did not pick the 3 stats, so these are DERIVED
+    // counts of your real data (9 projects, 9 certs, 3 degrees) — swap freely.
+    { value: '9', label: 'Projects shipped', detail: 'ML, cloud, IoT, and serverless' },
+    { value: '9', label: 'Certifications', detail: 'AWS, Kubernetes, Kafka, and more' },
+    { value: '3', label: 'Degrees', detail: 'B.Tech · M.S. · Ph.D. (in progress)' },
   ],
 
   education: [
-    // TODO: replace with your 3 schools (most recent first)
     {
       title: 'Ph.D. in Information Technology',
-      institution: 'Lakeside State University',
-      location: 'Portland, USA',
+      institution: 'University of the Cumberlands',
+      location: 'Kentucky, USA',
       period: '2023 — Present',
-      details: ['Dissertation in AI and information infrastructure', '4.0 GPA, multiple paper presentations'],
+      details: [
+        '4.0 GPA',
+        'Pursuing dissertation in Artificial Intelligence',
+        'Working on an MCP-focused dissertation paper',
+        'Conducted multiple paper presentations',
+      ],
     },
     {
-      title: 'M.S. in Computer Science',
-      institution: 'Bayview Institute of Technology',
-      location: 'San Francisco, USA',
+      title: 'Master of Science in Computer Science',
+      institution: 'California State University, East Bay',
+      location: 'Bay Area, California',
       period: '2018 — 2020',
-      details: ['Distributed systems and cloud engineering focus', 'Graduate teaching assistant and developer club lead'],
+      details: [
+        '3.4 GPA',
+        'Graduate Teaching Assistant and Graduate Computer Science Tutor',
+        'Google Developer Student Club Lead',
+      ],
     },
     {
-      title: 'B.Tech in Computer Science',
-      institution: 'Coastal University',
+      title: 'Bachelor of Technology in Computer Science',
+      institution: 'SRM Institute of Science and Technology',
       location: 'Chennai, India',
       period: '2014 — 2018',
-      details: ['Conference speaker and campus newspaper editor'],
+      details: [
+        'IET Conclave Speaker · MSB Guest Lecturer',
+        'Campus Ambassador — VH1',
+        'Editor — Official Newspaper',
+        'Director — SRMV Model UN',
+      ],
     },
   ],
 
   experience: [
-    // TODO: replace with your 4 roles (most recent first)
+    {
+      role: 'Senior Site Reliability Engineer 3',
+      company: 'Crystal Equation (Meta)',
+      location: 'California, USA',
+      period: 'January 2025 — Present',
+      achievements: [
+        'Architected GenAI + MCP integration — 40% efficiency gain',
+        'SME for 4+ mission-critical apps and SLO/SLI reviews',
+        'Led RAG/GenAI/MCP training; drive third-party AI initiatives',
+      ],
+      skills: ['GenAI', 'MCP', 'RAG', 'Chef', 'SLO/SLI'],
+    },
     {
       role: 'Site Reliability Engineer 2',
-      company: 'Northwind Cloud',
+      company: 'Crystal Equation (Meta)',
       location: 'California, USA',
-      period: 'Sept 2021 — Present',
+      period: 'September 2021 — December 2024',
       achievements: [
-        'Subject matter expert for 4+ mission-critical applications with regular SLO reviews',
-        'Lead cross-functional container and Kubernetes initiatives across teams',
-        'Promoted by driving best practices and reliability improvements',
+        'Built HA platforms and automation for third-party apps',
+        'Orchestrated Kubernetes and Docker workloads with Terraform',
+        'Led all cross-functional container and Kubernetes initiatives',
       ],
-      skills: ['Kubernetes', 'Terraform', 'AWS', 'Chef', 'Docker'],
+      skills: ['Kubernetes', 'Terraform', 'Docker', 'AWS'],
     },
     {
       role: 'Systems Engineer',
-      company: 'Brightpath Labs',
+      company: 'GoSite',
       location: 'San Diego (Remote), USA',
-      period: 'May 2021 — Aug 2021',
+      period: 'May 2021 — August 2021',
       achievements: [
-        'Re-architected query pipeline, reducing querying time by 68%',
-        'Built BI dashboards and monitoring across the data platform',
+        'Migrated BigQuery to AWS Lambda — cut query time 68%',
+        'Built Mode BI dashboards on AWS for stakeholders',
+        'Ran monitoring with Snowflake, DBT, Splunk, and Prometheus',
       ],
-      skills: ['AWS Lambda', 'Snowflake', 'Splunk', 'Prometheus'],
+      skills: ['AWS Lambda', 'Snowflake', 'DBT', 'Splunk', 'Prometheus'],
     },
     {
       role: 'Technical Engineer',
-      company: 'Cedar Analytics',
+      company: 'TalentNet Inc',
       location: 'Michigan (Remote), USA',
-      period: 'Jan 2021 — May 2021',
+      period: 'January 2021 — May 2021',
       achievements: [
-        'Reduced code complexity of tax workflow software by 40% via automation',
-        'Diagnosed complex system issues across multiple regions',
+        'Managed GoSystem Tax RS on AWS for millions',
+        'Cut software complexity 40% via automation; earned promotion',
+        'Built CI/CD pipeline in PowerShell via REST API',
       ],
       skills: ['AWS', 'Linux', 'PowerShell', 'CI/CD'],
-    },
-    {
-      role: 'Software Engineer (Full-Stack)',
-      company: 'Pinecrest Digital',
-      location: 'New York (Remote), USA',
-      period: 'Aug 2020 — Dec 2020',
-      achievements: [
-        'Built secure auth and FTP integration on a Java Spring stack',
-        'Implemented monitoring and alerting with CloudWatch',
-      ],
-      skills: ['Java Spring', 'JavaScript', 'Selenium', 'CloudWatch'],
     },
   ],
 
   projects: [
-    // TODO: replace with your 9 projects
-    { name: 'Road Traffic Severity Prediction', description: 'Machine learning pipeline predicting accident severity from live data.', stack: ['Python', 'AWS', 'Docker', 'Flask'] },
-    { name: 'Facial Expression Recognition', description: 'CNN-based recognition system, published as a research paper.', stack: ['Python', 'OpenCV', 'CNN'], link: 'https://example.com/paper' },
-    { name: 'Image Filter Service', description: 'Cloud-based image processing API with full CI.', stack: ['NodeJS', 'TypeScript', 'AWS'] },
-    { name: 'Web Code Editor', description: 'Browser IDE with live preview, deployed serverlessly.', stack: ['React', 'Terraform', 'Vercel'] },
-    { name: 'Geotagging Platform', description: 'Three-tier web app with OAuth and geo data.', stack: ['React', 'GCP', 'MongoDB'] },
-    { name: 'Desktop eCommerce App', description: 'Cross-platform desktop storefront.', stack: ['Electron', 'Materialize'] },
-    { name: 'Kafka Data Streaming', description: 'Message streaming pipeline for big-data workloads.', stack: ['Python', 'Kafka', 'Zookeeper'] },
-    { name: 'Serverless CI/CD Workflows', description: 'GitOps deployment flows on OpenShift.', stack: ['OpenShift', 'Argo CD', 'Knative'] },
-    { name: 'Infant Monitor System', description: 'IoT monitoring with cloud alerts on a Raspberry Pi.', stack: ['AWS IoT', 'MQTT', 'Raspberry Pi'] },
+    // From answers.txt Section 6. No repo/demo links or screenshots were provided,
+    // so `link`/`image` are omitted. Descriptions are the subtitles you gave.
+    { name: 'US Road Traffic Severity Prediction', description: 'Machine Learning', stack: ['Python', 'AWS', 'API', 'Docker', 'Jenkins', 'Flask', 'S3'] },
+    { name: 'Facial Expression Recognition System', description: 'Machine Learning · Research Paper', stack: ['Python', 'HAAR Filters', 'CNN Algorithm', 'OpenCV', 'FisherFaceRecognizer'] },
+    { name: 'Udagram Image Filter', description: 'Node.js Cloud-Based', stack: ['NodeJS', 'API', 'TypeScript', 'AWS', 'RESTful', 'Git', 'SQL', 'Jenkins'] },
+    { name: 'Code Editor', description: 'Web React JS', stack: ['React JS', 'HTML/CSS', 'JavaScript', 'API', 'Git', 'Terraform', 'Vercel'] },
+    { name: 'Geotagging Website', description: 'Three-tier React JS Web Application', stack: ['React JS', 'OAuth', 'Google Cloud Platform', 'Ansible', 'MongoDB'] },
+    { name: 'eCommerce Desktop Application', description: 'Electron JS', stack: ['ElectronJS', 'HTML', 'Materialize CSS', 'Linux', 'Desktop App'] },
+    { name: 'Message Data Streaming', description: 'Apache Kafka', stack: ['Python', 'Zookeeper', 'Git', 'Kafka', 'Big Data'] },
+    { name: 'CI/CD Workflow Serverless Applications', description: 'Red Hat OpenShift', stack: ['GitOps', 'OpenShift', 'Knative', 'Argo CD', 'Serverless'] },
+    { name: 'Infant Monitor System', description: 'Internet of Things', stack: ['AWS IoT', 'Git', 'MQTT', 'IFTTT', 'Raspberry Pi', 'Debian OS'] },
   ],
 
   skills: [
-    // TODO: replace with your skill categories
-    { category: 'Languages', items: ['Python', 'Go', 'TypeScript', 'Bash', 'SQL'] },
-    { category: 'Cloud', items: ['AWS', 'GCP', 'Serverless'] },
-    { category: 'Infrastructure', items: ['Kubernetes', 'Terraform', 'Helm', 'Docker', 'Ansible'] },
-    { category: 'Data & Messaging', items: ['PostgreSQL', 'Redis', 'Kafka', 'MongoDB'] },
-    { category: 'AI Stack', items: ['RAG', 'Embeddings', 'Vector DBs', 'LangChain'] },
+    // From answers.txt Section 8 (this view shows names only; ratings live in the
+    // terminal `skills` command). NOTE: your updated Section 8 no longer lists a
+    // Frontend group or TypeScript/Java/C++ — tell me if you want those kept.
+    { category: 'Languages', items: ['Python', 'JavaScript', 'Shell / Bash', 'Ruby'] },
+    { category: 'Backend / Cloud', items: ['AWS', 'Docker', 'Kubernetes'] },
+    { category: 'AI / ML', items: ['RAG / LLM', 'ML basics'] },
+    { category: 'Tools', items: ['Git / GitHub', 'Linux / WSL', 'CI/CD'] },
   ],
 
   certifications: [
-    // TODO: replace with your 10 certifications
-    { name: 'Certified Kubernetes Administrator (CKA)', issuer: 'CNCF', year: '2023' },
-    { name: 'AWS Solutions Architect — Associate', issuer: 'Amazon Web Services', year: '2022' },
-    { name: 'OpenShift Container Platform Training', issuer: 'Red Hat', year: '2022' },
-    { name: 'Cloud Engineering Professional', issuer: 'Coursera / Google', year: '2021' },
-    { name: 'Apache Kafka Fundamentals', issuer: 'Confluent', year: '2021' },
-    { name: 'DevNet Sandbox — Cloud Module', issuer: 'Cisco', year: '2021' },
-    { name: 'Scala Professional', issuer: 'Example Org', year: '2020' },
-    { name: 'Enterprise Java (J2EE) Development', issuer: 'Oracle Workforce Development', year: '2019' },
-    { name: 'Python Certified', issuer: 'HackerRank', year: '2019' },
-    { name: 'Customer Council Member', issuer: 'AWS', year: '2024' },
+    // From answers.txt Section 7. Issuers derived from the names you gave.
+    // TODO: years NOT PROVIDED in answers.txt — left blank (don't render a year).
+    // TODO: CKA issuer not stated in answers.txt — left blank.
+    { name: 'Python Certified', issuer: 'HackerRank', year: '' },
+    { name: 'Solutions Architect – Associate', issuer: 'Amazon Web Services', year: '' },
+    { name: 'Customer Council Member', issuer: 'AWS', year: '' },
+    { name: 'Certified Kubernetes Administrator (CKA)', issuer: '', year: '' },
+    { name: 'OpenShift Container Platform Training', issuer: 'Red Hat', year: '' },
+    { name: 'Cloud Engineering with Google (Professional)', issuer: 'Coursera', year: '' },
+    { name: 'Fundamentals for Apache Kafka', issuer: 'Confluent', year: '' },
+    { name: 'DevNet Sandbox – Cloud Module', issuer: 'Cisco', year: '' },
+    { name: 'Advanced JVM / J2EE Java Enterprise Servlets', issuer: 'Oracle Workforce Development', year: '' },
   ],
 
   contact: {
     heading: "Let's Connect",
-    // TODO: one-line availability note
+    // TODO: availability note NOT PROVIDED in answers.txt — generic placeholder
     note: 'Best reached by email — I reply within a day or two.',
-    // TODO: your email
-    email: 'alex@example.com',
     socials: [
-      // TODO: your real links
-      { label: 'GitHub', url: 'https://github.com/example', icon: 'github' },
-      { label: 'LinkedIn', url: 'https://linkedin.com/in/example', icon: 'linkedin' },
+      { label: 'GitHub', url: 'https://github.com/SMWundefined/', icon: 'github' },
+      { label: 'LinkedIn', url: 'https://linkedin.com/in/smw147', icon: 'linkedin' },
+      { label: 'Threads', url: 'https://www.threads.com/@wadoodphotos', icon: 'threads' },
+      { label: 'Website', url: 'https://wadoodsultan.com', icon: 'website' },
     ],
     threads: {
-      // TODO: your Threads profile URL; posts below are templates until
-      // the live feed is wired in a later session
-      url: 'https://threads.net/@example',
+      url: 'https://www.threads.com/@wadoodphotos',
+      handle: '@wadoodphotos',
+      // Post 1 below is the verbatim text of the post you linked (threads.com/share/Dk1YZJNm9).
+      // TODO: your 2nd linked post (threads.com/share/MIDEN4MRi, a Google I/O 2024 image
+      // post dated 05/14/24) has no extractable caption — paste its text and I'll add it.
       posts: [
-        { text: 'Spent the weekend teaching my homelab to self-heal. It now files better incident reports than I do.', date: '2d' },
-        { text: 'Hot take: the best SRE tooling is the runbook you never need to open.', date: '1w' },
+        {
+          text: 'TIL, Geoffrey Hinton, the great-great-grandson of George Boole, who invented the Boolean Algebra, was the PhD advisor of Ilya Sutskever and Alex Krizhevsky, and co-authored the paper on AlexNet which kicked started the new generation of GenAI and GPTs!',
+          date: 'Jul 2025',
+        },
       ],
     },
     blog: {
-      label: 'The Blogsphere',
+      // confirmed in answers.txt Section 10: "Blogsphere (or something Red Rising coded)"
+      label: 'Blogsphere',
       // a Red Rising nod — the Society's motto
       note: 'per aspera ad astra — coming soon',
     },
+    outposts: [
+      // from answers.txt Section 3 ("any other socials"), each sworn to a house
+      { label: 'Chess.com', sub: 'bullet 1650', house: 'house mars — the war game', url: 'https://www.chess.com/member/wadoodsm' },
+      { label: 'arXiv', sub: 'wadood_sm', house: 'house minerva — the scholar' },
+      { label: 'IEEE', sub: 'Wadood Sultan Mohammed', house: 'house vulcan — the forge' },
+    ],
   },
 };

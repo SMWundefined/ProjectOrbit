@@ -22,6 +22,10 @@ pnpm-debug.log*
 **/professional.md
 **/community.md
 **/personal.md
+**/answers.txt
+
+# local session notes for AI context — never committed
+SESSION-CHANGELOG.md
 
 # vector database
 chroma_db/

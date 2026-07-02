@@ -10,17 +10,6 @@ const { identity, highlights } = content;
 <PageTransition title={identity.name} active="about" description={`${identity.name} — ${identity.title}`}>
   <section class="relative flex h-dvh flex-col justify-center overflow-hidden px-8 sm:px-16 lg:px-28">
     <div class="max-w-3xl">
-      {
-        identity.photo && (
-          <img
-            src={identity.photo}
-            alt={identity.name}
-            class="photo-ring mb-10 h-28 w-28 rounded-full object-cover"
-            loading="eager"
-          />
-        )
-      }
-
       <p class="hero-kicker mb-5 text-xs uppercase">
         {identity.title}
       </p>
@@ -90,11 +79,6 @@ const { identity, highlights } = content;
     width: 26px;
     height: 1px;
     background: linear-gradient(90deg, rgba(201, 162, 39, 0.85), var(--retro-accent));
-  }
-
-  .photo-ring {
-    border: 1.5px solid var(--retro-accent);
-    box-shadow: var(--retro-glow-soft);
   }
 
   /* ---- the dial: watch-face restraint, no cards ----------------------- */
