@@ -3,9 +3,9 @@
 // Society knows this site: green channels, hairlines, restraint. The
 // life star goes supernova as you arrive — and the page then falls
 // through the hole it leaves: one drifting transmission, then the
-// wormhole itself — rings of the Color spectrum, house names rushing
-// past — and out the other side into the red era, where the Forum
-// keeps the social banners. Per aspera ad astra.
+// crossing — a single thread of light, green where the fall begins,
+// red where it lands — and out the other side into the red era, where
+// the Forum keeps the social banners. Per aspera ad astra.
 import PageTransition from '../../components/retro/PageTransition.astro';
 import { content } from '../../data/retro-content';
 
@@ -130,23 +130,23 @@ const numerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii'];
       </div>
     </section>
 
-    <!-- ================= fall ii: the wormhole ================= -->
-    <!-- Rings of the Color spectrum stream past continuously — alive, not
-         one-shot — while quiet fragments drift by. The tunnel leans with
-         the pointer; everything fades at the seams so nothing ever cuts. -->
-    <section class="panel warp" aria-hidden="true">
-      <div class="warp-stage">
-        <div class="warp-core"></div>
-        <span class="warp-ring" data-i="0" style="--rc: rgba(3, 122, 104, 0.75); --rg: rgba(3, 122, 104, 0.3);"></span>
-        <span class="warp-ring" data-i="1" style="--rc: rgba(200, 205, 215, 0.6); --rg: rgba(200, 205, 215, 0.22);"></span>
-        <span class="warp-ring" data-i="2" style="--rc: rgba(201, 162, 39, 0.85); --rg: rgba(201, 162, 39, 0.3);"></span>
-        <span class="warp-ring" data-i="3" style="--rc: rgba(217, 140, 166, 0.7); --rg: rgba(217, 140, 166, 0.25);"></span>
-        <span class="warp-ring" data-i="4" style="--rc: rgba(94, 74, 122, 0.85); --rg: rgba(74, 59, 92, 0.35);"></span>
-        <span class="warp-ring" data-i="5" style="--rc: rgba(193, 68, 14, 0.9); --rg: rgba(193, 68, 14, 0.35);"></span>
-        <span class="warp-word" data-c="0.3" style="--nx: -26vw; --ny: -14vh; color: #c8cdd7;">the void bends</span>
-        <span class="warp-word" data-c="0.45" style="--nx: 28vw; --ny: -12vh; color: #d98ca6;">colors bloom in the dark</span>
-        <span class="warp-word" data-c="0.58" style="--nx: -24vw; --ny: 16vh; color: #e8b04b;">gravity sings</span>
-        <span class="warp-word" data-c="0.74" style="--nx: 22vw; --ny: 18vh; color: #ff5e2e;">a red world rises</span>
+    <!-- ================= fall ii: the crossing ================= -->
+    <!-- One thread of light runs from the drift down to the Forum floor —
+         green where the fall begins, red where it lands. A single ember
+         rides it with the scroll. No spectacle: the passage is a line. -->
+    <section class="panel crossing" aria-hidden="true">
+      <div class="cross-line"></div>
+      <div class="cross-ember"></div>
+      <span class="cross-word" data-c="0.32" style="right: calc(50% + 2.6rem); top: 32%; color: #c8cdd7;">the void bends</span>
+      <span class="cross-word" data-c="0.68" style="left: calc(50% + 2.6rem); top: 68%; color: #ff5e2e;">a red world rises</span>
+      <!-- the dawn: the ember strikes the floor and the horizon breaks red -->
+      <div class="cross-dawn"></div>
+      <!-- the burn: flame and sparks at the seam — the old chapter catches,
+           and the new world rises out of the fire -->
+      <div class="cross-burn">
+        <div class="cross-fire"></div>
+        <div class="cross-fire-down"><div class="cross-fire"></div></div>
+        <canvas class="cross-sparks"></canvas>
       </div>
     </section>
 
@@ -279,8 +279,8 @@ const numerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii'];
   .d1 {
     background: linear-gradient(180deg, transparent, rgba(90, 18, 8, 0.14));
   }
-  .warp {
-    background: linear-gradient(180deg, rgba(90, 18, 8, 0.14), rgba(24, 12, 26, 0.55) 45%, rgba(26, 6, 3, 0.7));
+  .crossing {
+    background: linear-gradient(180deg, rgba(90, 18, 8, 0.14), rgba(24, 10, 8, 0.45) 50%, rgba(26, 6, 3, 0.7));
   }
   .forum {
     background: linear-gradient(180deg, rgba(26, 6, 3, 0.7), rgba(12, 3, 2, 0.9));
@@ -568,76 +568,213 @@ const numerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii'];
     color: rgba(232, 217, 181, 0.55);
   }
 
-  /* ---- fall ii: the wormhole ------------------------------------------------ */
+  /* ---- fall ii: the crossing ------------------------------------------------ */
 
-  /* the rings bleed vertically into the acts above and below, pulling both
-     toward the passage — their opacity fades at the seams instead, so
-     nothing is ever cut mid-flight. Only the sides are clipped (they'd be
-     offscreen anyway, and would otherwise widen the document). */
-  .warp {
-    overflow-y: visible;
-    overflow-x: clip;
-  }
-
-  /* the stage leans with the pointer — you steer through the tunnel */
-  .warp-stage {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    will-change: transform;
-  }
-
-  /* the vanishing point: a mouth of light that swallows the scroll */
-  .warp-core {
+  /* the thread: hairline plumb from the drift down to the Forum floor,
+     graded green → gold → red — the whole passage in one line */
+  .cross-line {
     position: absolute;
     left: 50%;
-    top: 50%;
-    width: 30vmin;
-    height: 22vmin;
-    transform: translate(-50%, -50%) scale(0.4);
-    border-radius: 50%;
-    background: radial-gradient(
-      ellipse at center,
-      rgba(240, 226, 192, 0.3) 0%,
-      rgba(193, 68, 14, 0.26) 40%,
-      transparent 72%
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    transform: translateX(-0.5px);
+    background: linear-gradient(
+      180deg,
+      transparent,
+      rgba(3, 122, 104, 0.55) 14%,
+      rgba(201, 162, 39, 0.5) 48%,
+      rgba(193, 68, 14, 0.7) 84%,
+      transparent
     );
-    filter: blur(6px);
-    opacity: 0.4;
-    will-change: transform, opacity;
+    pointer-events: none;
   }
 
-  /* rings of the Color spectrum — scale and opacity are set per-frame by JS */
-  .warp-ring {
+  /* the ember rides the thread with the scroll — top and color set by JS */
+  .cross-ember {
     position: absolute;
     left: 50%;
-    top: 50%;
-    width: 130vmax;
-    height: 82vmax;
-    margin: -41vmax 0 0 -65vmax;
-    border-radius: 50%;
-    border: 1.5px solid var(--rc);
+    top: 0;
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    transform: translate(-50%, -50%);
+    background: var(--ec, #e8b04b);
     box-shadow:
-      0 0 34px var(--rg),
-      inset 0 0 60px var(--rg);
+      0 0 10px 2px var(--ec, #e8b04b),
+      0 0 32px 9px color-mix(in srgb, var(--ec, #e8b04b) 30%, transparent);
     opacity: 0;
-    filter: blur(0.5px);
-    will-change: transform, opacity;
+    pointer-events: none;
+    will-change: top, opacity;
   }
 
-  /* quiet fragments drifting past on the way through */
-  .warp-word {
+  /* quiet fragments beside the thread — they surface in their own band */
+  .cross-word {
     position: absolute;
-    left: 50%;
-    top: 50%;
     font-family: var(--rr-serif);
     font-style: italic;
-    font-size: clamp(0.9rem, 1.6vw, 1.25rem);
-    letter-spacing: 0.2em;
+    font-size: clamp(0.85rem, 1.5vw, 1.1rem);
+    letter-spacing: 0.22em;
     white-space: nowrap;
     opacity: 0;
+    transform: translateY(calc(var(--wy, 0) * 1px));
+    text-shadow: 0 0 14px currentColor;
+    pointer-events: none;
     will-change: transform, opacity;
-    text-shadow: 0 0 18px currentColor;
+  }
+
+  /* the burn spills past the seam into the Forum — the panel must not
+     clip its own fire, and must paint above the Forum's backdrop */
+  .crossing {
+    overflow: visible;
+    z-index: 2;
+  }
+
+  /* the dawn: the helldiver's strike — a sudden narrow spark at the seam
+     that flares hot, spreads along the horizon, and settles into the
+     Forum's light. Scale, brightness, and opacity are set per-frame. */
+  .cross-dawn {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: min(74vw, 54rem);
+    height: 1px;
+    transform: translateX(-50%) scaleX(0.12);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 94, 46, 0.9) 20%,
+      #ffcea6 50%,
+      rgba(255, 94, 46, 0.9) 80%,
+      transparent
+    );
+    box-shadow:
+      0 0 16px 2px rgba(255, 94, 46, 0.6),
+      0 0 60px 16px rgba(193, 68, 14, 0.32);
+    opacity: 0;
+    pointer-events: none;
+    will-change: transform, opacity, filter;
+  }
+
+  /* the burn: everything that catches fire when the strike lands.
+     The container's opacity is gated per-frame; the flame and sparks
+     play once, on their own clocks, when .struck lands on the panel. */
+  .cross-burn {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  /* the flame: tongues of fire at the strike point — where the thread
+     meets the floor the page catches, burns hard for a breath, then
+     settles to embers. Narrow and tall so it reads flame, not glow. */
+  .cross-fire {
+    position: absolute;
+    left: 50%;
+    bottom: -6px;
+    width: min(34vw, 24rem);
+    height: 150px;
+    transform: translateX(-50%) scaleY(0.1);
+    transform-origin: 50% 100%;
+    background:
+      radial-gradient(10% 90% at 44% 100%, rgba(255, 224, 175, 0.65), transparent 70%),
+      radial-gradient(8% 75% at 57% 100%, rgba(255, 185, 115, 0.55), transparent 70%),
+      radial-gradient(17% 100% at 50% 100%, rgba(255, 140, 60, 0.6), transparent 65%),
+      radial-gradient(55% 70% at 47% 100%, rgba(255, 120, 50, 0.4), transparent 68%),
+      radial-gradient(80% 55% at 53% 100%, rgba(193, 68, 14, 0.45), transparent 72%);
+    filter: blur(7px);
+    opacity: 0;
+  }
+
+  /* the mirror: the same fire reflected below the line, as if the seam
+     were the surface of something molten — dimmer, softer, symmetric */
+  .cross-fire-down {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 6px;
+    height: 150px;
+    transform: scaleY(-1);
+    opacity: 0.6;
+    filter: blur(3px);
+    pointer-events: none;
+  }
+
+  .cross-fire-down .cross-fire {
+    bottom: 0;
+  }
+
+  /* one full second of fire before the settle — two leaps, three licks */
+  .struck .cross-fire {
+    animation: fire-flare 1800ms var(--retro-ease) forwards;
+  }
+
+  @keyframes fire-flare {
+    0% {
+      opacity: 0;
+      transform: translateX(-50%) scaleY(0.1);
+    }
+    6% {
+      opacity: 1;
+      transform: translateX(-50%) scaleY(1.25);
+    }
+    18% {
+      opacity: 0.92;
+      transform: translateX(-50%) scaleY(1);
+    }
+    30% {
+      opacity: 1;
+      transform: translateX(-50%) scaleY(1.3);
+    }
+    45% {
+      opacity: 0.9;
+      transform: translateX(-50%) scaleY(1.08);
+    }
+    58% {
+      opacity: 1;
+      transform: translateX(-50%) scaleY(1.18);
+    }
+    78% {
+      opacity: 0.55;
+      transform: translateX(-50%) scaleY(0.78);
+    }
+    100% {
+      opacity: 0.28;
+      transform: translateX(-50%) scaleY(0.5);
+    }
+  }
+
+  /* sparks off the strike: a thousand grains of white-hot metal thrown
+     off the line for a second, up and down alike — drawn on a canvas
+     centred on the seam, painted per-frame by the spark system */
+  .cross-sparks {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -190px;
+    width: 100%;
+    height: 380px;
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cross-ember {
+      display: none;
+    }
+    .cross-word {
+      opacity: 0.7;
+      transform: none;
+    }
+    .cross-dawn {
+      opacity: 0.45;
+      transform: translateX(-50%) scaleX(1);
+    }
+    .cross-burn {
+      display: none;
+    }
   }
 
   /* ---- act ii: the forum ------------------------------------------------------ */
@@ -654,6 +791,46 @@ const numerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii'];
     background: radial-gradient(ellipse at 50% -10%, #6e2210 0%, #3a1006 50%, #160502 100%);
     box-shadow: 0 -30px 110px rgba(193, 68, 14, 0.3);
     pointer-events: none;
+  }
+
+  /* the atmosphere: a thin arc of light along the limb, pulsing slowly
+     through the shades of the red era — crimson at rest, gold-red at
+     full breath. the planet is alive down there */
+  .mars-limb::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow:
+      0 -1px 0 rgba(214, 60, 70, 0.5),
+      0 -9px 24px rgba(178, 30, 45, 0.32),
+      0 -34px 85px rgba(139, 22, 32, 0.3);
+    animation: mars-breathe 6s ease-in-out infinite;
+  }
+
+  @keyframes mars-breathe {
+    0%,
+    100% {
+      opacity: 0.55;
+      box-shadow:
+        0 -1px 0 rgba(214, 60, 70, 0.5),
+        0 -9px 24px rgba(178, 30, 45, 0.32),
+        0 -34px 85px rgba(139, 22, 32, 0.3);
+    }
+    50% {
+      opacity: 1;
+      box-shadow:
+        0 -1px 0 rgba(255, 176, 100, 0.62),
+        0 -9px 28px rgba(236, 130, 55, 0.36),
+        0 -36px 95px rgba(201, 90, 25, 0.34);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mars-limb::before {
+      animation: none;
+      opacity: 0.75;
+    }
   }
 
   .forum-inner {
@@ -876,86 +1053,173 @@ const numerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii'];
 </style>
 
 <script>
-  // ---- the descent: one living rAF drives veil, tunnel, and words -----------
+  // ---- the descent: one rAF drives the veil and the ember -------------------
   const shell = document.querySelector<HTMLElement>('.contact-shell');
-  const warp = document.querySelector<HTMLElement>('.warp');
-  const stage = document.querySelector<HTMLElement>('.warp-stage');
-  const core = document.querySelector<HTMLElement>('.warp-core');
-  const rings = Array.from(document.querySelectorAll<HTMLElement>('.warp-ring'));
-  const words = Array.from(document.querySelectorAll<HTMLElement>('.warp-word'));
+  const cross = document.querySelector<HTMLElement>('.crossing');
+  const ember = document.querySelector<HTMLElement>('.cross-ember');
+  const dawn = document.querySelector<HTMLElement>('.cross-dawn');
+  const burn = document.querySelector<HTMLElement>('.cross-burn');
+  const words = Array.from(document.querySelectorAll<HTMLElement>('.cross-word'));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const clamp01 = (v: number): number => Math.min(1, Math.max(0, v));
 
-  // the tunnel leans toward the pointer — you steer the passage
-  let tx = 0;
-  let ty = 0;
-  let px = 0;
-  let py = 0;
-  if (!reduced) {
-    window.addEventListener(
-      'pointermove',
-      (e: PointerEvent) => {
-        tx = (e.clientX / window.innerWidth - 0.5) * 36;
-        ty = (e.clientY / window.innerHeight - 0.5) * 26;
-      },
-      { passive: true }
-    );
+  // the ember cools from era to era: green → gold → red
+  const stops: [number, number, number][] = [
+    [61, 220, 132],
+    [232, 176, 75],
+    [255, 94, 46],
+  ];
+  function emberColor(t: number): string {
+    const x = clamp01(t) * (stops.length - 1);
+    const i = Math.min(Math.floor(x), stops.length - 2);
+    const f = x - i;
+    const c = stops[i].map((v, k) => Math.round(v + (stops[i + 1][k] - v) * f));
+    return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
   }
 
   let raf = 0;
+  // the strike fires once per descent, on its own clock — a wheel tick
+  // can jump the scroll past the seam, but the spark still gets its moment
+  let struckAt = -1;
+  let prevNow = 0;
+
+  // ---- the spark shower: ~1400 grains thrown off the line for a second,
+  // mirrored above and below the seam, drawn additively on the canvas
+  const sparksCanvas = document.querySelector<HTMLCanvasElement>('.cross-sparks');
+  const sctx = sparksCanvas?.getContext('2d') ?? null;
+  interface Spark {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    birth: number;
+    life: number;
+    hue: number;
+  }
+  let sparks: Spark[] = [];
+
+  function igniteSparks(now: number): void {
+    if (!sparksCanvas || !sctx) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = sparksCanvas.clientWidth;
+    const h = sparksCanvas.clientHeight;
+    sparksCanvas.width = Math.round(w * dpr);
+    sparksCanvas.height = Math.round(h * dpr);
+    sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const cx = w / 2;
+    const spread = Math.min(w * 0.3, 460);
+    sparks = [];
+    for (let i = 0; i < 1400; i++) {
+      const r = Math.pow(Math.random(), 2.2); // dense at the strike point
+      sparks.push({
+        x: cx + (Math.random() < 0.5 ? -1 : 1) * r * spread,
+        y: h / 2,
+        vx: (Math.random() - 0.5) * 90,
+        vy: (Math.random() < 0.5 ? -1 : 1) * (40 + Math.random() * 260),
+        birth: now + Math.random() * 850, // the shower lasts about a second
+        life: 350 + Math.random() * 700,
+        hue: 18 + Math.random() * 30,
+      });
+    }
+  }
+
+  function drawSparks(now: number, dt: number): void {
+    if (!sparksCanvas || !sctx || sparks.length === 0) return;
+    const w = sparksCanvas.clientWidth;
+    const h = sparksCanvas.clientHeight;
+    sctx.clearRect(0, 0, w, h);
+    sctx.globalCompositeOperation = 'lighter';
+    let alive = false;
+    for (const sp of sparks) {
+      if (now < sp.birth) {
+        alive = true;
+        continue;
+      }
+      const age = now - sp.birth;
+      if (age > sp.life) continue;
+      alive = true;
+      sp.x += sp.vx * dt;
+      sp.y += sp.vy * dt;
+      sp.vx *= 0.985;
+      sp.vy *= 0.985;
+      const k = 1 - age / sp.life;
+      sctx.fillStyle = `hsla(${sp.hue.toFixed(0)}, 100%, ${(62 + 30 * k).toFixed(0)}%, ${(0.9 * k).toFixed(3)})`;
+      sctx.fillRect(sp.x, sp.y, 1.5, 1.5);
+    }
+    if (!alive) {
+      sparks = [];
+      sctx.clearRect(0, 0, w, h);
+    }
+  }
 
   function frame(now: number): void {
+    const vh = window.innerHeight;
+
     // the red tide: global scroll progress
-    const max = document.documentElement.scrollHeight - window.innerHeight;
+    const max = document.documentElement.scrollHeight - vh;
     const p = max > 0 ? window.scrollY / max : 0;
     shell?.style.setProperty('--descent', clamp01((p - 0.08) / 0.72).toFixed(3));
 
-    if (warp && stage && core) {
-      const r = warp.getBoundingClientRect();
-      const vh = window.innerHeight;
-      // t: 0 = panel below the fold, 0.5 = filling the screen, 1 = passed
-      const t = clamp01((vh - r.top) / (vh + r.height));
-      // cov: how fully the panel owns the viewport — rings fade at the
-      // seams instead of being cut by a panel edge
-      const topGap = Math.max(r.top, 0);
-      const botGap = Math.max(vh - r.bottom, 0);
-      const cov = clamp01(1 - (topGap + botGap) / (vh * 0.9));
-      const nearby = r.bottom > -vh && r.top < vh * 2;
+    // the ember tracks the viewport's center down the thread
+    if (!reduced && cross && ember) {
+      const r = cross.getBoundingClientRect();
+      if (r.bottom > 0 && r.top < vh) {
+        // traw runs past 1 while the panel scrolls out — the dawn needs it
+        const traw = (vh * 0.5 - r.top) / r.height;
+        const t = clamp01(traw);
+        ember.style.top = `${(t * 100).toFixed(2)}%`;
+        ember.style.opacity = (clamp01(Math.min(t, 1 - t) / 0.1) * 0.95).toFixed(3);
+        ember.style.setProperty('--ec', emberColor(t));
 
-      if (nearby) {
-        px += (tx - px) * 0.05;
-        py += (ty - py) * 0.05;
-        stage.style.transform = `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px)`;
-
-        // the tunnel streams continuously; scroll adds thrust
-        const flow = reduced ? 0.35 : now * 0.00006 + t * 1.05;
-
-        for (const ring of rings) {
-          const i = Number(ring.dataset.i ?? 0);
-          const rp = (((flow + i / rings.length) % 1) + 1) % 1;
-          const scale = 0.05 + Math.pow(rp, 2.1) * 2.3;
-          ring.style.transform = `scale(${scale.toFixed(3)})`;
-          ring.style.opacity = (Math.sin(Math.PI * rp) * 0.85 * cov).toFixed(3);
-        }
-
-        // fragments surface in their own band of the fall, drift out, let go
+        // fragments surface in their own band of the fall, drift, let go
         for (const w of words) {
           const c = parseFloat(w.dataset.c ?? '0.5');
-          const wp = clamp01(1 - Math.abs(t - c) / 0.16);
-          const drift = (t - c) * 2.2;
-          const s = 0.9 + wp * 0.25 + Math.max(0, drift);
-          const d = (0.4 + drift).toFixed(3);
-          w.style.transform = `translate(-50%, -50%) translate(calc(var(--nx) * ${d}), calc(var(--ny) * ${d})) scale(${s.toFixed(3)})`;
-          w.style.opacity = (Math.pow(wp, 1.4) * 0.95 * cov).toFixed(3);
+          const wp = clamp01(1 - Math.abs(t - c) / 0.3);
+          w.style.opacity = (Math.pow(wp, 1.3) * 0.85).toFixed(3);
+          w.style.setProperty('--wy', ((c - t) * 26).toFixed(1));
         }
 
-        // the mouth of the new world: nearer, brighter, breathing
-        const pulse = reduced ? 0 : 0.05 * Math.sin(now / 700);
-        core.style.transform = `translate(-50%, -50%) scale(${(0.4 + t * 1.7 + pulse).toFixed(3)})`;
-        core.style.opacity = (0.25 + t * 0.75).toFixed(3);
+        // the dawn: the strike is sudden — a narrow white-hot spark that
+        // flares on its own clock, spreads, and settles into the new world
+        if (dawn) {
+          if (traw >= 0.64 && struckAt < 0) {
+            struckAt = now;
+            cross.classList.add('struck'); // the flame plays once
+            igniteSparks(now); // and the shower with it
+          }
+          if (traw < 0.5 && struckAt >= 0) {
+            struckAt = -1; // climbed back out — re-arm
+            cross.classList.remove('struck');
+            sparks = [];
+          }
+
+          // attack in 100ms, burn white-hot for ~450ms, then let it cool
+          let flare = 0;
+          let spread = 0.12;
+          if (struckAt >= 0) {
+            const u = clamp01((now - struckAt) / 1000);
+            flare = u < 0.1 ? u / 0.1 : u < 0.55 ? 1 : 1 - (u - 0.55) / 0.45;
+            spread = 0.12 + 0.88 * (1 - Math.pow(1 - u, 3));
+          }
+
+          // gate fades the settled line if you back up past the seam;
+          // out lets it go once the Forum owns the screen
+          const gate = clamp01((traw - 0.58) / 0.06);
+          const out = clamp01((traw - 1.08) / 0.22);
+          const hold = struckAt >= 0 ? 0.55 * gate : 0;
+          dawn.style.opacity = (Math.max(flare, hold) * (1 - out)).toFixed(3);
+          dawn.style.transform = `translateX(-50%) scaleX(${spread.toFixed(3)})`;
+          dawn.style.filter = `brightness(${(1 + 1.8 * flare).toFixed(3)})`;
+          if (burn) {
+            burn.style.opacity = (struckAt >= 0 ? gate * (1 - out) : 0).toFixed(3);
+          }
+        }
       }
     }
+
+    drawSparks(now, Math.min(now - prevNow, 50) / 1000);
+    prevNow = now;
 
     raf = requestAnimationFrame(frame);
   }
