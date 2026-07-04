@@ -85,6 +85,7 @@ export function initTerminal(): void {
     if (!ghostHint) return;
     ghostHint.textContent = `  ${text}`;
     ghostHint.classList.add('on');
+    scrollToBottom();
   }
 
   function hideHint(): void {
@@ -290,6 +291,8 @@ export function initTerminal(): void {
     syncTypedText();
     hideHint();
     scheduleHint();
+    // typing can wrap the prompt to a new line — keep it above the fold
+    scrollToBottom();
   });
 
   commandInput.addEventListener('keydown', (e) => {
@@ -329,6 +332,15 @@ export function initTerminal(): void {
     core?.classList.add('flare');
     window.setTimeout(() => tesseract?.classList.add('active'), 820);
     window.setTimeout(() => location.assign(href), 2050);
+    // self-recovery: if we are still here well after the navigation should
+    // have happened (nav failed, or a bfcache restore resumed this timer),
+    // stand the terminal back up instead of staying collapsed forever
+    window.setTimeout(() => {
+      page.classList.remove('term-warping');
+      core?.classList.remove('flare');
+      tesseract?.classList.remove('active');
+      busy = false;
+    }, 3600);
   }
 
   // The title bar X is the same door
@@ -338,10 +350,10 @@ export function initTerminal(): void {
   });
 
   // Back/forward cache: pressing Back from /retro restores this page
-  // exactly as it left — mid-warp, collapsed, input locked. pageshow with
-  // persisted=true is the only signal; undo the warp and hand back the prompt.
-  window.addEventListener('pageshow', (e) => {
-    if (!e.persisted) return;
+  // exactly as it left — mid-warp, collapsed, input locked. Cleanup runs on
+  // every pageshow (not just persisted) — it is idempotent, and browsers
+  // differ on which restore path they take.
+  window.addEventListener('pageshow', () => {
     document.getElementById('term-page')?.classList.remove('term-warping');
     document.getElementById('warp-core')?.classList.remove('flare');
     document.getElementById('warp-tesseract')?.classList.remove('active');

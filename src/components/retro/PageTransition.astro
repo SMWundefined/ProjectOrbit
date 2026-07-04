@@ -464,6 +464,12 @@ const sliceEnd = (currentIndex + 1) / sequence.length;
       // navigate while the fade is still finishing: the blur covers the
       // document swap instead of leaving a dead beat after it
       window.setTimeout(() => location.assign(href), 260);
+      // self-recovery: if we are somehow still here (failed nav, or a
+      // bfcache restore resumed this timer), un-blur and re-arm
+      window.setTimeout(() => {
+        main.classList.remove('retro-depart');
+        departing = false;
+      }, 1800);
     } else {
       location.assign(href);
     }

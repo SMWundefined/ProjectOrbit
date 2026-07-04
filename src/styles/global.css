@@ -32,18 +32,30 @@
 }
 
 /* ghost hint: a quiet suggestion at the prompt, visible only while idle.
-   Light grey so it never competes with real output; fades, never pops. */
+   Light grey so it never competes with real output; fades in, never pops.
+   display:none when hidden — an opacity-0 span still occupies the row and
+   forces the user's typing to wrap early (real bug on mobile). */
 #ghost-hint {
+  display: none;
   color: var(--color-term-muted);
-  opacity: 0;
-  transition: opacity 0.7s ease;
+  white-space: pre-wrap;
 }
 #ghost-hint.on {
-  opacity: 0.45;
+  display: inline;
+  animation: ghost-fade-in 0.7s ease both;
+}
+@keyframes ghost-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.45;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  #ghost-hint {
-    transition: none;
+  #ghost-hint.on {
+    animation: none;
+    opacity: 0.45;
   }
 }
 
