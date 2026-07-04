@@ -48,8 +48,10 @@ export function initTerminal(): void {
   };
 
   const sessionId = newSessionId();
+  const ghostHint = document.getElementById('ghost-hint');
   let mode: 'command' | 'chat' = 'command';
   let busy = false;
+  let ranHelp = false;
 
   // Entered-line history for up/down recall. historyIndex === entered.length
   // means "live line"; draft preserves whatever was typed before recalling.
@@ -63,6 +65,51 @@ export function initTerminal(): void {
     typedText!.textContent = commandInput!.value;
   }
 
+  // --- Ghost hints: quiet grey suggestions at an idle prompt --------------
+  // First visit whispers "type help"; after that, an idle pause (~6-8s)
+  // may surface what to try next — command mode points at ai-chat, chat
+  // mode rotates real questions. Any keystroke dismisses instantly.
+
+  const CHAT_HINTS = [
+    'ask: what is Wadood reading right now?',
+    'ask: is Wadood working on AI?',
+    'ask: what does he do at Meta?',
+    "ask: what's his chess rating?",
+    'ask: who does he look up to?',
+    'ask: what is he building these days?',
+  ];
+  let chatHintIndex = Math.floor(Math.random() * CHAT_HINTS.length);
+  let hintTimer = 0;
+
+  function showHint(text: string): void {
+    if (!ghostHint) return;
+    ghostHint.textContent = `  ${text}`;
+    ghostHint.classList.add('on');
+  }
+
+  function hideHint(): void {
+    ghostHint?.classList.remove('on');
+  }
+
+  function scheduleHint(delayMs?: number): void {
+    if (!ghostHint) return;
+    window.clearTimeout(hintTimer);
+    const delay = delayMs ?? (mode === 'chat' ? 7500 : 6000);
+    hintTimer = window.setTimeout(() => {
+      if (busy || commandInput!.value) return;
+      if (mode === 'command') {
+        showHint(ranHelp ? 'try ai-chat' : 'type help');
+      } else if (Math.random() < 0.65) {
+        // chat prompts only sometimes get a hint — suggestions, not nagging
+        chatHintIndex = (chatHintIndex + 1) % CHAT_HINTS.length;
+        showHint(CHAT_HINTS[chatHintIndex]);
+      } else {
+        scheduleHint();
+        return;
+      }
+    }, delay);
+  }
+
   function scrollToBottom(): void {
     terminalContent!.scrollTop = terminalContent!.scrollHeight;
   }
@@ -74,6 +121,8 @@ export function initTerminal(): void {
     promptLabel!.classList.toggle('text-accent-gold', chat);
     promptLabel!.classList.toggle('text-term-blue', !chat);
     cursor?.classList.toggle('text-accent-gold', chat);
+    hideHint();
+    scheduleHint(chat ? 5000 : undefined);
   }
 
   function echoHtml(line: string): string {
@@ -162,6 +211,7 @@ export function initTerminal(): void {
       window.clearInterval(thinking);
       busy = false;
       scrollToBottom();
+      scheduleHint();
     }
   }
 
@@ -170,6 +220,9 @@ export function initTerminal(): void {
   function submit(raw: string): void {
     if (busy) return;
     const trimmed = raw.trim();
+    hideHint();
+    if (trimmed.toLowerCase() === 'help') ranHelp = true;
+    scheduleHint();
 
     if (mode === 'chat') {
       rememberLine(raw);
@@ -233,9 +286,14 @@ export function initTerminal(): void {
     syncTypedText();
   }
 
-  commandInput.addEventListener('input', syncTypedText);
+  commandInput.addEventListener('input', () => {
+    syncTypedText();
+    hideHint();
+    scheduleHint();
+  });
 
   commandInput.addEventListener('keydown', (e) => {
+    hideHint();
     if (e.key === 'Enter') {
       submit(commandInput.value);
     } else if (e.key === 'ArrowUp') {
@@ -293,4 +351,24 @@ export function initTerminal(): void {
     if (selection && selection.toString()) return;
     focusInput();
   });
+
+  // First visit: a quiet nudge toward the door.
+  scheduleHint(900);
+
+  // --- Virtual keyboard: never let it hide the prompt --------------------
+  // Chrome Android resizes the layout for us (interactive-widget in the
+  // viewport meta). iOS Safari only shrinks the *visual* viewport, so we
+  // size the terminal window to it by hand while the keyboard is up.
+  const vv = window.visualViewport;
+  if (vv && terminalWindow && matchMedia('(pointer: coarse)').matches) {
+    const fitToViewport = () => {
+      const keyboardUp = window.innerHeight - vv.height > 80;
+      terminalWindow.style.height = keyboardUp ? `${vv.height}px` : '';
+      if (keyboardUp) window.scrollTo(0, 0); // undo any focus auto-scroll
+      scrollToBottom();
+    };
+    vv.addEventListener('resize', fitToViewport);
+    // focusing the input raises the keyboard; re-fit once it settles
+    commandInput.addEventListener('focus', () => window.setTimeout(fitToViewport, 300));
+  }
 }

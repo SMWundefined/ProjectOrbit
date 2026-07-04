@@ -31,6 +31,22 @@
   color: var(--color-accent-gold);
 }
 
+/* ghost hint: a quiet suggestion at the prompt, visible only while idle.
+   Light grey so it never competes with real output; fades, never pops. */
+#ghost-hint {
+  color: var(--color-term-muted);
+  opacity: 0;
+  transition: opacity 0.7s ease;
+}
+#ghost-hint.on {
+  opacity: 0.45;
+}
+@media (prefers-reduced-motion: reduce) {
+  #ghost-hint {
+    transition: none;
+  }
+}
+
 /* scrollbar matches the terminal — near-invisible until needed */
 #terminal-content {
   scrollbar-width: thin;

@@ -14,7 +14,7 @@ set -euo pipefail
 DATA_BUCKET="projectorbit-data-633017683854"
 AWS_REGION="us-east-1"
 EC2_HOST="ubuntu@52.91.152.40"
-SSH_KEY="$HOME/.ssh/projectorbit-key.pem"
+SSH_KEY="${SSH_KEY:-$HOME/.ssh/projectorbit-key.pem}"
 APP_DIR="/opt/projectorbit"
 DATA_DIR="src/data"
 

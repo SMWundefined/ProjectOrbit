@@ -129,7 +129,11 @@ const commands: Record<string, Command> = {
 function helpText(): string {
   const visible = Object.entries(commands).filter(([, command]) => !command.hidden);
   const width = Math.max(...visible.map(([name]) => name.length)) + 3;
-  const rows = visible.map(([name, command]) => `  ${name.padEnd(width)}${command.description}`);
+  const rows = visible.map(([name, command]) => {
+    const row = `  ${name.padEnd(width)}${command.description}`;
+    // ai-chat is the star of the show — lit in the house gold
+    return name === 'ai-chat' ? `<span class="text-accent-gold">${row} ✦</span>` : row;
+  });
   return ['Available commands:', '', ...rows].join('\n');
 }
 
