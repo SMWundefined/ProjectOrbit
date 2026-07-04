@@ -337,6 +337,22 @@ export function initTerminal(): void {
     warpTo('/retro');
   });
 
+  // Back/forward cache: pressing Back from /retro restores this page
+  // exactly as it left — mid-warp, collapsed, input locked. pageshow with
+  // persisted=true is the only signal; undo the warp and hand back the prompt.
+  window.addEventListener('pageshow', (e) => {
+    if (!e.persisted) return;
+    document.getElementById('term-page')?.classList.remove('term-warping');
+    document.getElementById('warp-core')?.classList.remove('flare');
+    document.getElementById('warp-tesseract')?.classList.remove('active');
+    sessionStorage.removeItem('orbit-nav');
+    sessionStorage.removeItem('orbit-warp-in');
+    busy = false;
+    focusInput();
+    hideHint();
+    scheduleHint();
+  });
+
   // Focus management: preventScroll stops the browser from yanking the
   // window around to reveal the visually hidden input. Refocus only on
   // clicks inside the terminal, and never while the user is selecting text.
@@ -356,19 +372,39 @@ export function initTerminal(): void {
   scheduleHint(900);
 
   // --- Virtual keyboard: never let it hide the prompt --------------------
-  // Chrome Android resizes the layout for us (interactive-widget in the
-  // viewport meta). iOS Safari only shrinks the *visual* viewport, so we
-  // size the terminal window to it by hand while the keyboard is up.
+  // iOS Safari only shrinks the *visual* viewport when the keyboard rises;
+  // the layout (and the h-dvh window) stays full height, so the keyboard
+  // covers the bottom half. Worse, #term-page centers the window, so just
+  // shrinking it re-centers it half under the keyboard anyway. The fix:
+  // size the window to the visual viewport AND pin it to the visible top,
+  // tracking offsetTop because iOS scrolls the layout viewport on focus.
   const vv = window.visualViewport;
   if (vv && terminalWindow && matchMedia('(pointer: coarse)').matches) {
+    // high-water mark of the viewport height = "no keyboard" baseline;
+    // reset on rotate so landscape isn't judged against portrait
+    let tallest = 0;
     const fitToViewport = () => {
-      const keyboardUp = window.innerHeight - vv.height > 80;
-      terminalWindow.style.height = keyboardUp ? `${vv.height}px` : '';
-      if (keyboardUp) window.scrollTo(0, 0); // undo any focus auto-scroll
+      tallest = Math.max(tallest, vv.height);
+      const keyboardUp = tallest - vv.height > 120;
+      if (keyboardUp) {
+        terminalWindow.style.height = `${vv.height}px`;
+        terminalWindow.style.alignSelf = 'flex-start';
+        terminalWindow.style.transform = `translateY(${vv.offsetTop}px)`;
+      } else {
+        terminalWindow.style.height = '';
+        terminalWindow.style.alignSelf = '';
+        terminalWindow.style.transform = '';
+      }
       scrollToBottom();
     };
     vv.addEventListener('resize', fitToViewport);
+    vv.addEventListener('scroll', fitToViewport);
+    window.addEventListener('orientationchange', () => {
+      tallest = 0;
+      window.setTimeout(fitToViewport, 300);
+    });
     // focusing the input raises the keyboard; re-fit once it settles
-    commandInput.addEventListener('focus', () => window.setTimeout(fitToViewport, 300));
+    commandInput.addEventListener('focus', () => window.setTimeout(fitToViewport, 350));
+    fitToViewport();
   }
 }

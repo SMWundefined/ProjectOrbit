@@ -469,6 +469,17 @@ const sliceEnd = (currentIndex + 1) / sequence.length;
     }
   }
 
+  // Back/forward cache: the browser Back button can restore this page
+  // exactly as it left — mid-depart, blurred, navigation locked. pageshow
+  // with persisted=true is the only signal we get; wake the page back up.
+  window.addEventListener('pageshow', (e) => {
+    if (!e.persisted) return;
+    departing = false;
+    main?.classList.remove('retro-depart', 'retro-arrive', 'retro-arrive-warp');
+    sessionStorage.removeItem('orbit-nav');
+    sessionStorage.removeItem('orbit-warp-in');
+  });
+
   window.addEventListener(
     'wheel',
     (e: WheelEvent) => {
