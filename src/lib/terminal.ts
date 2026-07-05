@@ -15,6 +15,22 @@ function escapeHtml(text: string): string {
     .replace(/'/g, '&#39;');
 }
 
+// URLs and emails in an answer become real links; everything else stays
+// escaped text. Email matching is safe after the URL pass because a URL's
+// "@" is always preceded by "/" — no local part, no match.
+function linkify(text: string): string {
+  return escapeHtml(text)
+    .replace(
+      /\bhttps?:\/\/[^\s<>()"']+[^\s<>()"'.,;:!?]/g,
+      (url) =>
+        `<a href="${url}" target="_blank" rel="noopener" class="underline underline-offset-4">${url}</a>`
+    )
+    .replace(
+      /\b[\w.+-]+@[\w-]+\.[\w.-]*\w/g,
+      (addr) => `<a href="mailto:${addr}" class="underline underline-offset-4">${addr}</a>`
+    );
+}
+
 function newSessionId(): string {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
@@ -138,7 +154,7 @@ export function initTerminal(): void {
 
     const settle = (text: string, isError: boolean) => {
       window.clearInterval(thinking);
-      responseDiv.textContent = text;
+      responseDiv.innerHTML = linkify(text);
       responseDiv.classList.toggle('text-term-muted', isError);
     };
 
@@ -163,14 +179,19 @@ export function initTerminal(): void {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
+      let streamed = '';
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        responseDiv.textContent += decoder.decode(value, { stream: true });
+        streamed += decoder.decode(value, { stream: true });
+        responseDiv.textContent = streamed;
         scrollToBottom();
       }
-      if (!responseDiv.textContent) {
+      if (!streamed) {
         settle('(no response — try asking again)', true);
+      } else {
+        // stream is plain text while it arrives; links go live at the end
+        responseDiv.innerHTML = linkify(streamed);
       }
     } catch {
       settle('Could not reach the AI endpoint. Is the site running with its backends up?', true);
