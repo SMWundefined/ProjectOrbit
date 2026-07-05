@@ -130,24 +130,61 @@ function smalltalkReply(query: string): string | null {
   return null;
 }
 
+// --- Query rewriting for retrieval --------------------------------------
+// The embedder has no idea who "he" is: "who does he look up to?" scores
+// ~0.31 (below the similarity bar) while "who does Wadood look up to?"
+// scores ~0.52 straight onto the right chunk. Visitors ask with pronouns —
+// the terminal frames it that way — so expand them to the name for
+// retrieval only; the LLM still sees the visitor's own words.
+
+function expandPronouns(query: string): string {
+  return query
+    .replace(/\b(he|him|himself)\b/gi, OWNER_NAME)
+    .replace(/\bhis\b/gi, `${OWNER_NAME}'s`);
+}
+
 // --- Fallback when retrieval has nothing relevant ----------------------
+// Varied on purpose: a guest who misses twice shouldn't read the same
+// card twice. Same honest posture every time, different words.
 
 const TECH_RE =
   /\b(code|coding|program|python|java|typescript|javascript|kubernetes|docker|aws|gcp|cloud|terraform|devops|sre|api|database|sql|git|github|repo|project|deploy|infra|linux|server|software|engineer|stack|framework)\w*\b/i;
 
 function fallbackMessage(query: string): string {
   const technical = TECH_RE.test(query);
-  const lines = [
+  const opener = pick([
     `Honest answer: that one isn't in my notes yet, and I'd rather tell you that than guess.`,
-  ];
+    `That's outside my training data — and I don't improvise about ${OWNER_NAME}.`,
+    `He hasn't briefed me on that one yet. I only speak to what I know.`,
+    `My notes come up empty there — and guessing would be beneath both of us.`,
+    `Even a model devoted to one subject has gaps. You found one.`,
+  ]);
+  const lines = [opener];
   if (technical && GITHUB_URL) {
-    lines.push(`For code and technical work, ${OWNER_NAME}'s GitHub tells it best: ${GITHUB_URL}`);
+    lines.push(
+      pick([
+        `For code and technical work, ${OWNER_NAME}'s GitHub tells it best: ${GITHUB_URL}`,
+        `The code speaks for itself, though — his GitHub: ${GITHUB_URL}`,
+      ])
+    );
   } else if (LINKEDIN_URL) {
-    lines.push(`For the fuller story, his LinkedIn is a good place: ${LINKEDIN_URL}`);
+    lines.push(
+      pick([
+        `For the fuller story, his LinkedIn is a good place: ${LINKEDIN_URL}`,
+        `The formal record lives on his LinkedIn: ${LINKEDIN_URL}`,
+      ])
+    );
   } else if (GITHUB_URL) {
     lines.push(`You can find more here: ${GITHUB_URL}`);
   }
-  lines.push(`Meanwhile — ask me about his work, his projects, or what he's reading. The notes run deep there.`);
+  lines.push(
+    pick([
+      `Meanwhile — ask me about his work, his projects, or what he's reading. The notes run deep there.`,
+      `Try me instead on his work, his idols, or what he's building right now — those I know cold.`,
+      `What I do know well: his career, his interests, his chess rating. Pick one.`,
+      `Ask me about who he looks up to, what he does off the clock, or what he's reading — safer ground.`,
+    ])
+  );
   return lines.join('\n');
 }
 
@@ -308,7 +345,7 @@ export const POST: APIRoute = async ({ request }) => {
   let chunks = session.queries.get(cacheKey);
   if (!chunks) {
     try {
-      chunks = await retrieve(query);
+      chunks = await retrieve(expandPronouns(query));
     } catch {
       return textResponse(
         'The retrieval service is offline. Start it with: python scripts/rag_server.py',
