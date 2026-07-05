@@ -81,11 +81,11 @@ function sessionFor(sessionId: string): SessionEntry {
 // cold fallback. A guest saying hi deserves a host saying hi back.
 
 const GREETING_RE =
-  /^(hi+|hiya|hello+|hey+|yo|sup|howdy|hola|namaste|greetings|good\s+(morning|afternoon|evening))(\s+(there|friend|ai|bot|wadood))?[\s!.,?]*$/i;
+  /^(hi+|hiya|hello+|hey+|yo|sup|howdy|hola|namaste|greetings|good\s+(morning|afternoon|evening))(\s+(there|friend|ai|bot|wadood|wadoodllm))?[\s!.,?]*$/i;
 const HOWAREYOU_RE =
   /^(how are you( doing| today)?|how'?s it going|how'?s everything|what'?s up|wassup)[\s!.,?]*$/i;
 const IDENTITY_RE =
-  /^(who are you|what are you|introduce yourself|tell me about (yourself|you))[\s!.,?]*$/i;
+  /^(who are you|what are you|(who|what) is wadoodllm|introduce yourself|tell me about (yourself|you))[\s!.,?]*$/i;
 const HELP_RE =
   /^(help|what can you do|what can i ask( you)?( about)?|what do you know|menu|options)[\s!.,?]*$/i;
 const THANKS_RE =
@@ -99,9 +99,9 @@ function pick(variants: string[]): string {
 function smalltalkReply(query: string): string | null {
   if (GREETING_RE.test(query)) {
     return pick([
-      `Hello, and welcome. I'm ${OWNER_NAME}'s AI — he left me running here to speak for him.\nAsk me about his work, his projects, his education, or what he's reading these days.`,
-      `Hey — good to see you. I keep ${OWNER_NAME}'s notes while he's away from the console.\nHis work at Meta, his projects, his chess rating — all fair game. What are you curious about?`,
-      `Welcome aboard. If ${OWNER_NAME} were here he'd greet you himself; until then, I'm his stand-in.\nAsk me anything about his experience, projects, or interests.`,
+      `Hello, and welcome. I'm WadoodLLM — a language model trained on exactly one subject: ${OWNER_NAME}.\nHis work, his projects, his education, what he's reading — ask away.`,
+      `Hey — good to see you. WadoodLLM, at your service: every parameter devoted to ${OWNER_NAME}.\nHis work at Meta, his projects, his chess rating — all fair game. What are you curious about?`,
+      `Welcome aboard. If ${OWNER_NAME} were here he'd greet you himself; until then, WadoodLLM speaks for him.\nAsk me anything about his experience, projects, or interests.`,
     ]);
   }
   if (HOWAREYOU_RE.test(query)) {
@@ -109,7 +109,7 @@ function smalltalkReply(query: string): string | null {
   }
   if (IDENTITY_RE.test(query)) {
     return [
-      `I'm the assistant ${OWNER_NAME} left running in this terminal — part concierge, part mission log.`,
+      `I'm WadoodLLM — the model ${OWNER_NAME} left running in this terminal. One subject, studied properly.`,
       `I answer from his notes, and only from his notes: if he were here, this is what he'd tell you.`,
       `Ask about his work, his projects, his education, or the things he does off the clock.`,
     ].join('\n');
@@ -176,7 +176,7 @@ function buildSystemPrompt(chunks: RetrievedChunk[]): string {
     .map((chunk, i) => `[${i + 1}] (${chunk.metadata.section})\n${chunk.text}`)
     .join('\n\n');
   return [
-    `You are ${OWNER_NAME}'s personal AI assistant, living inside his terminal portfolio website.`,
+    `You are WadoodLLM, ${OWNER_NAME}'s personal AI assistant, living inside his terminal portfolio website.`,
     `You are his stand-in and PA: when you answer, channel "if ${OWNER_NAME} were here, this is what he would tell you."`,
     `Voice: warm, welcoming, approachable, forthcoming — and truthful above all.`,
     `Style: clean and minimal, quietly confident, no hype and no filler; a subtle fondness for space and science fits the house aesthetic.`,

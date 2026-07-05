@@ -1,19 +1,18 @@
-// Terminal UI controller: input handling, history navigation, tab
-// completion, AI chat mode, and rendering. Command behavior lives in
-// commands.ts; the AI backend lives at /api/chat.
+// Terminal UI controller: a single conversation with WadoodLLM. Everything
+// typed goes straight to the model (/api/chat); 'retro' is the one door out,
+// 'clear' and 'exit' are quiet courtesies. No command registry — the LLM is
+// the interface.
 
-import { commandNames, escapeHtml, executeCommand, type CommandContext } from './commands';
-
-const AI_PROMPT = 'ai ✦'; // ai ✦ — gold marks chat mode throughout
+const PROMPT = 'WadoodLLM ✦';
 const CHAT_ENDPOINT = '/api/chat';
 
-function longestCommonPrefix(values: string[]): string {
-  if (values.length === 0) return '';
-  let prefix = values[0];
-  for (const value of values.slice(1)) {
-    while (!value.startsWith(prefix)) prefix = prefix.slice(0, -1);
-  }
-  return prefix;
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function newSessionId(): string {
@@ -28,30 +27,15 @@ export function initTerminal(): void {
   const terminalContent = document.getElementById('terminal-content');
   const typedText = document.getElementById('typed-text');
   const terminalWindow = document.getElementById('terminal-window');
-  const promptLabel = document.getElementById('prompt-label');
-  const cursor = document.getElementById('cursor');
 
-  if (!commandInput || !commandHistory || !terminalContent || !typedText || !promptLabel) {
+  if (!commandInput || !commandHistory || !terminalContent || !typedText) {
     console.error('Terminal elements not found.');
     return;
   }
 
-  // Identity is injected by Terminal.astro from env — never hardcoded here.
-  const prompt = terminalContent.dataset.prompt || 'guest@orbit:~$';
-  const ctx: CommandContext = {
-    links: {
-      github: terminalContent.dataset.github ?? '',
-      linkedin: terminalContent.dataset.linkedin ?? '',
-      email: terminalContent.dataset.email ?? '',
-      website: terminalContent.dataset.website ?? '',
-    },
-  };
-
   const sessionId = newSessionId();
   const ghostHint = document.getElementById('ghost-hint');
-  let mode: 'command' | 'chat' = 'command';
   let busy = false;
-  let ranHelp = false;
 
   // Entered-line history for up/down recall. historyIndex === entered.length
   // means "live line"; draft preserves whatever was typed before recalling.
@@ -66,9 +50,9 @@ export function initTerminal(): void {
   }
 
   // --- Ghost hints: quiet grey suggestions at an idle prompt --------------
-  // First visit whispers "type help"; after that, an idle pause (~6-8s)
-  // may surface what to try next — command mode points at ai-chat, chat
-  // mode rotates real questions. Any keystroke dismisses instantly.
+  // First visit whispers a question ~900ms in; after that an idle pause
+  // (~7.5s) sometimes surfaces the next one — suggestions, not nagging.
+  // Any keystroke dismisses instantly.
 
   const CHAT_HINTS = [
     'ask: what is Wadood reading right now?',
@@ -92,44 +76,26 @@ export function initTerminal(): void {
     ghostHint?.classList.remove('on');
   }
 
-  function scheduleHint(delayMs?: number): void {
+  function scheduleHint(delayMs = 7500, always = false): void {
     if (!ghostHint) return;
     window.clearTimeout(hintTimer);
-    const delay = delayMs ?? (mode === 'chat' ? 7500 : 6000);
     hintTimer = window.setTimeout(() => {
       if (busy || commandInput!.value) return;
-      if (mode === 'command') {
-        showHint(ranHelp ? 'try ai-chat' : 'type help');
-      } else if (Math.random() < 0.65) {
-        // chat prompts only sometimes get a hint — suggestions, not nagging
+      if (always || Math.random() < 0.65) {
         chatHintIndex = (chatHintIndex + 1) % CHAT_HINTS.length;
         showHint(CHAT_HINTS[chatHintIndex]);
       } else {
         scheduleHint();
-        return;
       }
-    }, delay);
+    }, delayMs);
   }
 
   function scrollToBottom(): void {
     terminalContent!.scrollTop = terminalContent!.scrollHeight;
   }
 
-  function setMode(next: 'command' | 'chat'): void {
-    mode = next;
-    const chat = next === 'chat';
-    promptLabel!.textContent = chat ? `${AI_PROMPT} ` : `${prompt} `;
-    promptLabel!.classList.toggle('text-accent-gold', chat);
-    promptLabel!.classList.toggle('text-term-blue', !chat);
-    cursor?.classList.toggle('text-accent-gold', chat);
-    hideHint();
-    scheduleHint(chat ? 5000 : undefined);
-  }
-
   function echoHtml(line: string): string {
-    const promptClass = mode === 'chat' ? 'text-accent-gold' : 'text-term-blue';
-    const promptText = mode === 'chat' ? AI_PROMPT : prompt;
-    return `<div><span class="${promptClass}">${promptText}</span> ${escapeHtml(line)}</div>`;
+    return `<div><span class="text-accent-gold">${PROMPT}</span> ${escapeHtml(line)}</div>`;
   }
 
   function print(line: string, html: string): void {
@@ -222,35 +188,26 @@ export function initTerminal(): void {
     if (busy) return;
     const trimmed = raw.trim();
     hideHint();
-    if (trimmed.toLowerCase() === 'help') ranHelp = true;
     scheduleHint();
+    rememberLine(raw);
+    if (!trimmed) return;
 
-    if (mode === 'chat') {
-      rememberLine(raw);
-      if (!trimmed) return;
-      if (trimmed.toLowerCase() === 'exit' || trimmed.toLowerCase() === 'quit') {
-        print(trimmed, 'Back to command mode.');
-        setMode('command');
-        return;
-      }
-      void askAI(trimmed);
+    const word = trimmed.toLowerCase();
+    if (word === 'retro') {
+      print(trimmed, 'As you wish. Powering down the intelligence… raising the nostalgia.');
+      busy = true; // the terminal is leaving — no more input
+      window.setTimeout(() => warpTo('/retro'), 700);
       return;
     }
-
-    const result = executeCommand(raw, ctx);
-    if (result.type === 'clear') {
+    if (word === 'clear') {
       commandHistory!.innerHTML = '';
-    } else if (result.type === 'enter-chat') {
-      print(raw, result.html);
-      setMode('chat');
-    } else if (result.type === 'navigate') {
-      print(raw, result.html);
-      busy = true; // the terminal is leaving — no more input
-      window.setTimeout(() => warpTo(result.href), result.delayMs);
-    } else {
-      print(raw, result.html);
+      return;
     }
-    rememberLine(raw);
+    if (word === 'exit' || word === 'quit') {
+      print(trimmed, "There is no exit — only orbit. (For the pre-AI web, type 'retro'.)");
+      return;
+    }
+    void askAI(trimmed);
   }
 
   function recall(direction: -1 | 1): void {
@@ -263,26 +220,6 @@ export function initTerminal(): void {
       if (historyIndex === entered.length) return;
       historyIndex += 1;
       commandInput!.value = historyIndex === entered.length ? draft : entered[historyIndex];
-    }
-    syncTypedText();
-  }
-
-  function complete(): void {
-    if (mode !== 'command') return;
-    const value = commandInput!.value;
-    if (!value || value.includes(' ')) return;
-    const matches = commandNames().filter((name) => name.startsWith(value.toLowerCase()));
-    if (matches.length === 0) return;
-    if (matches.length === 1) {
-      commandInput!.value = matches[0];
-    } else {
-      const prefix = longestCommonPrefix(matches);
-      if (prefix.length > value.length) {
-        commandInput!.value = prefix;
-      } else {
-        // Stuck on an ambiguous prefix — list the options, shell-style.
-        print(value, matches.join('   '));
-      }
     }
     syncTypedText();
   }
@@ -306,8 +243,8 @@ export function initTerminal(): void {
       e.preventDefault();
       recall(1);
     } else if (e.key === 'Tab') {
+      // keep focus in the conversation — there is nothing to complete
       e.preventDefault();
-      complete();
     }
   });
 
@@ -362,7 +299,9 @@ export function initTerminal(): void {
     busy = false;
     focusInput();
     hideHint();
-    scheduleHint();
+    // pageshow fires on first load too (after init), so this IS the
+    // first-visit hint: a quiet opening line ~900ms in, guaranteed.
+    scheduleHint(900, true);
   });
 
   // Focus management: preventScroll stops the browser from yanking the
@@ -379,9 +318,6 @@ export function initTerminal(): void {
     if (selection && selection.toString()) return;
     focusInput();
   });
-
-  // First visit: a quiet nudge toward the door.
-  scheduleHint(900);
 
   // --- Virtual keyboard: never let it hide the prompt --------------------
   // iOS Safari only shrinks the *visual* viewport when the keyboard rises;

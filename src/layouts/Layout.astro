@@ -15,7 +15,10 @@ const title =
 		     Android). iOS gets the same via the visualViewport handler in terminal.ts. -->
 		<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
 		<meta name="color-scheme" content="dark" />
+		<!-- .ico first for Safari & friends (no SVG favicon support); SVG for the rest -->
+		<link rel="icon" href="/favicon.ico" sizes="48x48" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
 		<style>

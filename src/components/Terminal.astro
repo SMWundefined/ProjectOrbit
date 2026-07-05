@@ -3,14 +3,6 @@
 const user = import.meta.env.PUBLIC_TERMINAL_USER ?? 'guest';
 const host = import.meta.env.PUBLIC_TERMINAL_HOST ?? 'orbit';
 const title = import.meta.env.PUBLIC_SITE_TITLE ?? `${user}@${host}: ~`;
-const prompt = `${user}@${host}:~$`;
-
-const contact = {
-  github: import.meta.env.PUBLIC_GITHUB_URL ?? '',
-  linkedin: import.meta.env.PUBLIC_LINKEDIN_URL ?? '',
-  email: import.meta.env.PUBLIC_CONTACT_EMAIL ?? '',
-  website: import.meta.env.PUBLIC_WEBSITE_URL ?? '',
-};
 
 const lastLogin = new Date().toLocaleString('en-US', {
   weekday: 'short',
@@ -56,25 +48,23 @@ const lastLogin = new Date().toLocaleString('en-US', {
     <!-- Terminal canvas -->
     <div
       id="terminal-content"
-      data-prompt={prompt}
-      data-github={contact.github}
-      data-linkedin={contact.linkedin}
-      data-email={contact.email}
-      data-website={contact.website}
       class="min-h-0 flex-1 cursor-text overflow-y-auto overscroll-contain p-4 text-sm leading-relaxed text-term-green sm:p-6"
     >
       <div class="mb-4">
         <p class="text-term-muted">Last login: {lastLogin}</p>
-        <p class="mt-2">Welcome to {host}.</p>
-        <p>Type <span class="text-term-blue">help</span> to get started.</p>
+        <p class="text-term-muted">
+          Missing the old internet? Type <span class="text-term-blue">retro</span> — the web as it was before machines learned to talk.
+        </p>
+        <p class="mt-3"><span class="text-accent-gold">WadoodLLM &#x2726;</span></p>
+        <p>Trained on a single subject. Fluent in all of it. Ask anything.</p>
       </div>
 
       <div id="command-history"></div>
 
       <div class="relative flex" id="current-prompt">
-        <span id="prompt-label" class="shrink-0 whitespace-pre text-term-blue">{prompt} </span>
+        <span id="prompt-label" class="shrink-0 whitespace-pre text-accent-gold">WadoodLLM &#x2726; </span>
         <span id="typed-text" class="break-all whitespace-pre-wrap"></span>
-        <span id="cursor" class="animate-blink select-none" aria-hidden="true">&#x258B;</span>
+        <span id="cursor" class="animate-blink text-accent-gold select-none" aria-hidden="true">&#x258B;</span>
         <span id="ghost-hint" class="pointer-events-none select-none" aria-hidden="true"></span>
         <label for="command-input" class="sr-only">Terminal command input</label>
         <input
