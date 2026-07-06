@@ -11,6 +11,8 @@
 
 import type { APIRoute } from 'astro';
 import Groq from 'groq-sdk';
+import { appendFile, mkdir } from 'node:fs/promises';
+import { dirname } from 'node:path';
 
 export const prerender = false;
 
@@ -38,6 +40,75 @@ const OWNER_NAME = OWNER.charAt(0).toUpperCase() + OWNER.slice(1);
 
 const TOP_K = 5;
 const MAX_QUERY_LENGTH = 500;
+
+// --- Telemetry: what people actually ask ---------------------------------
+// One JSONL line per chat on local disk + a fire-and-forget event to the
+// self-hosted Umami on this same box. Both are best-effort: telemetry must
+// never delay or break an answer, and prompt text never leaves owned infra.
+
+const CHAT_LOG_FILE = env('CHAT_LOG_FILE'); // e.g. /opt/projectorbit/logs/chat.jsonl
+const UMAMI_URL = env('UMAMI_URL'); // e.g. http://127.0.0.1:3100
+const UMAMI_WEBSITE_ID = env('UMAMI_WEBSITE_ID');
+const SITE_HOSTNAME = (env('PUBLIC_WEBSITE_URL') || 'https://wadoodsultan.com').replace(
+  /^https?:\/\/|\/$/g,
+  ''
+);
+// umami filters bot-looking user agents; this is our own server talking to
+// our own instance, so present as a browser
+const TELEMETRY_UA =
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36 OrbitTelemetry';
+
+let logDirReady = false;
+
+interface ChatRecord {
+  ts: string;
+  sessionId: string;
+  query: string;
+  route: 'rag' | 'smalltalk' | 'relay' | 'fallback' | 'error';
+  score?: number;
+  provider?: string;
+  ms: number;
+}
+
+function record(entry: ChatRecord): void {
+  void (async () => {
+    if (CHAT_LOG_FILE) {
+      try {
+        if (!logDirReady) {
+          await mkdir(dirname(CHAT_LOG_FILE), { recursive: true });
+          logDirReady = true;
+        }
+        await appendFile(CHAT_LOG_FILE, `${JSON.stringify(entry)}\n`);
+      } catch {
+        /* never let telemetry break an answer */
+      }
+    }
+    if (UMAMI_URL && UMAMI_WEBSITE_ID) {
+      try {
+        await fetch(`${UMAMI_URL}/api/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'User-Agent': TELEMETRY_UA },
+          body: JSON.stringify({
+            type: 'event',
+            payload: {
+              website: UMAMI_WEBSITE_ID,
+              hostname: SITE_HOSTNAME,
+              url: '/api/chat',
+              name: 'chat',
+              data: {
+                route: entry.route,
+                query: entry.query.slice(0, 200),
+                ...(entry.score !== undefined ? { score: entry.score } : {}),
+              },
+            },
+          }),
+        });
+      } catch {
+        /* same */
+      }
+    }
+  })();
+}
 
 interface RetrievedChunk {
   text: string;
@@ -361,13 +432,30 @@ export const POST: APIRoute = async ({ request }) => {
     return textResponse(`Keep questions under ${MAX_QUERY_LENGTH} characters.`, 400, 'error');
   }
 
+  const started = Date.now();
+  const log = (route: ChatRecord['route'], extra?: Partial<ChatRecord>) =>
+    record({
+      ts: new Date().toISOString(),
+      sessionId,
+      query,
+      route,
+      ms: Date.now() - started,
+      ...extra,
+    });
+
   // Greetings and small talk get a host's welcome, not a retrieval miss.
   const smalltalk = smalltalkReply(query);
-  if (smalltalk) return textResponse(smalltalk, 200, 'smalltalk');
+  if (smalltalk) {
+    log('smalltalk');
+    return textResponse(smalltalk, 200, 'smalltalk');
+  }
 
   // "Tell him…" never reaches the LLM — it would promise delivery it
   // cannot make.
-  if (RELAY_RE.test(query)) return textResponse(relayReply(), 200, 'smalltalk');
+  if (RELAY_RE.test(query)) {
+    log('relay');
+    return textResponse(relayReply(), 200, 'smalltalk');
+  }
 
   // Retrieval, with the session cache short-circuiting repeats.
   const session = sessionFor(sessionId);
@@ -377,6 +465,7 @@ export const POST: APIRoute = async ({ request }) => {
     try {
       chunks = await retrieve(expandPronouns(query));
     } catch {
+      log('error');
       return textResponse(
         'The retrieval service is offline. Start it with: python scripts/rag_server.py',
         503,
@@ -392,11 +481,15 @@ export const POST: APIRoute = async ({ request }) => {
 
   const bestScore = chunks[0]?.score ?? 0;
   if (chunks.length === 0 || bestScore < MIN_SIMILARITY) {
+    // the gold seam: questions visitors wanted answered that the notes
+    // don't cover yet
+    log('fallback', { score: Number(bestScore.toFixed(3)) });
     return textResponse(fallbackMessage(query), 200, 'fallback');
   }
 
   // Generation: Groq when a key is configured, local Ollama otherwise.
   const systemPrompt = buildSystemPrompt(chunks);
+  log('rag', { score: Number(bestScore.toFixed(3)), provider: groq ? 'groq' : 'ollama' });
   if (groq) return generateWithGroq(systemPrompt, query);
   return generateWithOllama(systemPrompt, query);
 };

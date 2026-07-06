@@ -35,6 +35,13 @@ const description = `${ogTitle}. A terminal portfolio answered by WadoodLLM, an 
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
+		<!-- self-hosted umami (first-party /stats route, cookieless, data never
+		     leaves our EC2); id is public by design -->
+		<script
+			defer
+			src="/stats/script.js"
+			data-website-id="f29c5a60-83a4-41b0-be1d-9375fe7409ce"
+			data-do-not-track="true"></script>
 		<style>
 			/* before any stylesheet: the browser must never paint white */
 			html {
