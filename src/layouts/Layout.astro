@@ -1,9 +1,15 @@
 ---
 import '../styles/global.css';
+import { content } from '../data/retro-content';
 
 // browser tab title; the terminal window bar keeps PUBLIC_SITE_TITLE
 const title =
 	import.meta.env.PUBLIC_TAB_TITLE ?? import.meta.env.PUBLIC_SITE_TITLE ?? 'Terminal Portfolio';
+
+// search + share metadata — public professional identity only
+const site = (import.meta.env.PUBLIC_WEBSITE_URL ?? 'https://wadoodsultan.com').replace(/\/$/, '');
+const ogTitle = `${content.identity.name} — ${content.identity.title}`;
+const description = `${ogTitle}. A terminal portfolio answered by WadoodLLM, an AI trained on a single subject. Ask it anything.`;
 ---
 
 <!doctype html>
@@ -15,6 +21,14 @@ const title =
 		     Android). iOS gets the same via the visualViewport handler in terminal.ts. -->
 		<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
 		<meta name="color-scheme" content="dark" />
+		<meta name="description" content={description} />
+		<link rel="canonical" href={`${site}/`} />
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content={`${site}/`} />
+		<meta property="og:title" content={ogTitle} />
+		<meta property="og:description" content={description} />
+		<meta property="og:site_name" content={content.identity.name} />
+		<meta property="og:image" content={`${site}/apple-touch-icon.png`} />
 		<!-- .ico first for Safari & friends (no SVG favicon support); SVG for the rest -->
 		<link rel="icon" href="/favicon.ico" sizes="48x48" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />

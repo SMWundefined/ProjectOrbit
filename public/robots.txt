@@ -1,0 +1,9 @@
+# wadoodsultan.com — index the site, not the private surfaces.
+# resume.pdf is deliberately NOT disallowed: it carries an
+# X-Robots-Tag noindex header, and crawlers must fetch it to see that.
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /stats/
+
+Sitemap: https://wadoodsultan.com/sitemap.xml

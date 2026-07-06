@@ -34,6 +34,10 @@ const next = currentIndex < sequence.length - 1 ? sequence[currentIndex + 1] : n
 // this page's slice of the stellar lifecycle
 const sliceStart = currentIndex / sequence.length;
 const sliceEnd = (currentIndex + 1) / sequence.length;
+
+// search + share metadata — public professional identity only
+const site = (import.meta.env.PUBLIC_WEBSITE_URL ?? 'https://wadoodsultan.com').replace(/\/$/, '');
+const canonical = `${site}${sequence[currentIndex]?.href ?? '/retro'}`;
 ---
 
 <!doctype html>
@@ -43,6 +47,12 @@ const sliceEnd = (currentIndex + 1) / sequence.length;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <meta name="color-scheme" content="dark" />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={`${site}/apple-touch-icon.png`} />
     <!-- .ico first for Safari & friends (no SVG favicon support); SVG for the rest -->
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
