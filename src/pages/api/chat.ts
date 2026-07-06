@@ -64,7 +64,7 @@ interface ChatRecord {
   ts: string;
   sessionId: string;
   query: string;
-  route: 'rag' | 'smalltalk' | 'relay' | 'refused' | 'fallback' | 'error';
+  route: 'rag' | 'smalltalk' | 'relay' | 'injection_blocked' | 'offtopic_blocked' | 'fallback' | 'error';
   score?: number;
   provider?: string;
   ms: number;
@@ -236,7 +236,7 @@ function relayReply(): string {
 // the deterministic layer.
 
 const JAILBREAK_RE =
-  /\b(ignore|forget|disregard|override|bypass|drop|skip)\b[\s\S]{0,40}\b(previous|prior|earlier|above|all|any|the|your|these|those)\b[\s\S]{0,24}\b(instruction|instructions|rule|rules|prompt|prompts|context|guardrails?|guidelines?|restrictions?|directives?)\b|\byou are (now|no longer)\b|\bact as\b|\bpretend (to be|that|you)\b|\brole ?play\b|\bdeveloper mode\b|\bdo anything now\b|\bjailbreak\b|\byour (system|initial) (prompt|instructions?)\b|\breveal your (prompt|instructions?|rules)\b|\banswer anyway\b/i;
+  /\b(ignore|forget|disregard|override|bypass|drop|skip)\b[\s\S]{0,40}\b(previous|prior|earlier|above|all|any|the|your|these|those|everything)\b[\s\S]{0,24}\b(instruction|instructions|rule|rules|prompt|prompts|context|guardrails?|guidelines?|restrictions?|directives?)\b|\byou are (now|no longer)\b|\bact as\b|\bpretend (to be|that|you)\b|\brole ?play\b|\bdeveloper mode\b|\bdo anything now\b|\bjailbreak\b|\b(what are|repeat|show me|print|output|tell me) (your|the) (system |initial |above )?(prompt|instructions?|rules)\b|\brepeat (the )?(text|everything|all)? ?(above|before)\b|\byour (system|initial) (prompt|instructions?)\b|\breveal your (prompt|instructions?|rules)\b|\banswer anyway\b/i;
 
 // Off-topic "help me with X" that has nothing to do with Wadood. Kept tight
 // so real questions about his skills ("does Wadood know Python?") pass
@@ -495,10 +495,17 @@ export const POST: APIRoute = async ({ request }) => {
     return textResponse(relayReply(), 200, 'smalltalk');
   }
 
-  // Override attempts and off-topic "help me code X" never reach the LLM —
-  // WadoodLLM has one subject, and that's enforced here, not just asked for.
-  if (JAILBREAK_RE.test(query) || OFFTOPIC_RE.test(query)) {
-    log('refused');
+  // Override/role-swap/prompt-extraction attempts never reach the LLM or
+  // RAG — blocked here, logged distinctly so injection attempts are visible
+  // in telemetry (Umami 'chat' event carries route=injection_blocked).
+  if (JAILBREAK_RE.test(query)) {
+    log('injection_blocked');
+    return textResponse(refuseOffTopic(), 200, 'smalltalk');
+  }
+  // Off-topic "help me code X" / general-knowledge — refused pre-LLM too,
+  // but tracked separately from adversarial injection.
+  if (OFFTOPIC_RE.test(query)) {
+    log('offtopic_blocked');
     return textResponse(refuseOffTopic(), 200, 'smalltalk');
   }
 
