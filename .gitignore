@@ -27,6 +27,9 @@ pnpm-debug.log*
 # local session notes for AI context — never committed
 SESSION-CHANGELOG.md
 
+# private deep-dive docs — never published
+docs/
+
 # vector database
 chroma_db/
 

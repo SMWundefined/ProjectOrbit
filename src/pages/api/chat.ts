@@ -41,6 +41,32 @@ const OWNER_NAME = OWNER.charAt(0).toUpperCase() + OWNER.slice(1);
 
 const TOP_K = 5;
 const MAX_QUERY_LENGTH = 500;
+const MAX_BODY_BYTES = 10_000; // a chat body is <1KB; anything bigger is abuse
+
+// --- Rate limiting: one visitor cannot burn the LLM quota ----------------
+// Fixed one-minute windows, keyed by session AND by client IP (sessionId is
+// client-controlled, so the IP key backstops sessionId rotation). In-process
+// state is enough: a single instance serves /api/*.
+
+const RATE_WINDOW_MS = 60_000;
+const MAX_PER_SESSION = 10; // an engaged human asks a few per minute
+const MAX_PER_IP = 30; // several tabs behind one NAT still fit
+const MAX_RATE_KEYS = 5000;
+const rateBuckets = new Map<string, { count: number; resetAt: number }>();
+
+function rateLimited(key: string, max: number): boolean {
+  const now = Date.now();
+  const bucket = rateBuckets.get(key);
+  if (!bucket || now > bucket.resetAt) {
+    if (rateBuckets.size >= MAX_RATE_KEYS) {
+      for (const [k, v] of rateBuckets) if (now > v.resetAt) rateBuckets.delete(k);
+    }
+    rateBuckets.set(key, { count: 1, resetAt: now + RATE_WINDOW_MS });
+    return false;
+  }
+  bucket.count += 1;
+  return bucket.count > max;
+}
 
 // --- Telemetry: what people actually ask ---------------------------------
 // One JSONL line per chat on local disk + a fire-and-forget event to the
@@ -65,7 +91,15 @@ interface ChatRecord {
   ts: string;
   sessionId: string;
   query: string;
-  route: 'rag' | 'smalltalk' | 'relay' | 'injection_blocked' | 'offtopic_blocked' | 'fallback' | 'error';
+  route:
+    | 'rag'
+    | 'smalltalk'
+    | 'relay'
+    | 'injection_blocked'
+    | 'offtopic_blocked'
+    | 'rate_limited'
+    | 'fallback'
+    | 'error';
   score?: number;
   provider?: string;
   ms: number;
@@ -544,6 +578,13 @@ function ollamaTextStream(upstream: ReadableStream<Uint8Array>): ReadableStream<
 // --- Route --------------------------------------------------------------
 
 export const POST: APIRoute = async ({ request }) => {
+  // size gate before parsing: don't buffer a hostile payload just to
+  // discover its query field is too long
+  const declaredBytes = Number(request.headers.get('content-length') ?? 0);
+  if (declaredBytes > MAX_BODY_BYTES) {
+    return textResponse('Request too large.', 413, 'error');
+  }
+
   let query: string;
   let sessionId: string;
   try {
@@ -559,6 +600,24 @@ export const POST: APIRoute = async ({ request }) => {
   }
   if (query.length > MAX_QUERY_LENGTH) {
     return textResponse(`Keep questions under ${MAX_QUERY_LENGTH} characters.`, 400, 'error');
+  }
+
+  // rate gate: cheap, before any persona work or retrieval
+  const clientIp =
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  if (rateLimited(`s:${sessionId}`, MAX_PER_SESSION) || rateLimited(`ip:${clientIp}`, MAX_PER_IP)) {
+    record({
+      ts: new Date().toISOString(),
+      sessionId,
+      query,
+      route: 'rate_limited',
+      ms: 0,
+    });
+    return textResponse(
+      `Easy there — even I need a breath between questions. Give it a minute, then ask away.`,
+      429,
+      'error'
+    );
   }
 
   const started = Date.now();

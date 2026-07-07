@@ -90,7 +90,7 @@ class Handler(BaseHTTPRequestHandler):
             length = int(self.headers.get("Content-Length", "0"))
             payload = json.loads(self.rfile.read(length) or b"{}")
             query = str(payload.get("query", "")).strip()
-            k = min(int(payload.get("k", 5)), MAX_K)
+            k = max(1, min(int(payload.get("k", 5)), MAX_K))
         except (ValueError, json.JSONDecodeError):
             self._send_json(400, {"error": "invalid request body"})
             return

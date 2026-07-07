@@ -3,14 +3,6 @@
 const user = import.meta.env.PUBLIC_TERMINAL_USER ?? 'guest';
 const host = import.meta.env.PUBLIC_TERMINAL_HOST ?? 'orbit';
 const title = import.meta.env.PUBLIC_SITE_TITLE ?? `${user}@${host}: ~`;
-
-const lastLogin = new Date().toLocaleString('en-US', {
-  weekday: 'short',
-  month: 'short',
-  day: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-});
 ---
 
 <div id="term-page" class="relative flex min-h-screen items-center justify-center overflow-hidden bg-page p-0 font-mono sm:p-6">
@@ -51,7 +43,9 @@ const lastLogin = new Date().toLocaleString('en-US', {
       class="min-h-0 flex-1 cursor-text overflow-y-auto overscroll-contain p-4 text-sm leading-relaxed text-term-green sm:p-6"
     >
       <div class="mb-4">
-        <p class="text-term-muted">Last login: {lastLogin}</p>
+        <!-- filled client-side: the page is prerendered, so a build-time
+             date would show when CI ran, not when the visitor arrived -->
+        <p class="text-term-muted">Last login: <span id="last-login"></span></p>
         <p class="text-term-muted">
           Missing the old internet? Type <span class="text-term-blue">retro</span> — the web as it was before machines learned to talk.
         </p>
@@ -95,6 +89,18 @@ const lastLogin = new Date().toLocaleString('en-US', {
 </div>
 
 <script>
+  // "Last login" is the visitor's arrival time, not the build's.
+  const lastLogin = document.getElementById('last-login');
+  if (lastLogin) {
+    lastLogin.textContent = new Date().toLocaleString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
   // Pointer parallax on the backdrop — desktop only, skipped for reduced motion.
   const backdrop = document.getElementById('backdrop');
   const finePointer = matchMedia('(pointer: fine)').matches;
